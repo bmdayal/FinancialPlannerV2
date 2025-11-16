@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Planner - Agent AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Financial Planner</span>
+                </div>
+                <div class="nav-menu">
+                    <a href="#" onclick="resetApp()" class="nav-link">Home</a>
+                    <a href="#" class="nav-link">About</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Landing Page -->
+        <div id="landingPage" class="page active">
+            <div class="container">
+                <section class="hero">
+                    <h1>Comprehensive Financial Planning</h1>
+                    <p>Powered by Advanced AI Agents</p>
+                    <p class="subtitle">Select the planning services you need and let our AI agents create your personalized financial plan</p>
+                </section>
+
+                <!-- Plan Selection -->
+                <section class="plans-section">
+                    <h2>Step 1: Choose Your Planning Options</h2>
+                    <div class="plans-grid" id="plansGrid">
+                        <!-- Plans will be loaded here -->
+                    </div>
+                </section>
+
+                <!-- User Information Form -->
+                <section class="form-section">
+                    <h2>Step 2: Tell Us About Yourself</h2>
+                    <form id="userInfoForm" class="info-form">
+                        <!-- Basic Information -->
+                        <div class="form-group">
+                            <h3>Basic Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Current Age *</label>
+                                    <input type="number" id="age" name="age" min="18" max="100" required>
+                                </div>
+                                <div class="form-field">
+                                    <label>Annual Income ($) *</label>
+                                    <input type="number" id="annual_income" name="annual_income" min="0" required>
+                                </div>
+                                <div class="form-field">
+                                    <label>Current Savings/Assets ($) *</label>
+                                    <input type="number" id="savings" name="savings" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Retirement Planning Section -->
+                        <div class="form-group" id="retirementSection" style="display: none;">
+                            <h3>Retirement Planning Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Desired Retirement Age</label>
+                                    <input type="number" id="retirement_age" name="retirement_age" min="50" max="100">
+                                </div>
+                                <div class="form-field">
+                                    <label>Risk Tolerance</label>
+                                    <select id="risk_tolerance_retirement" name="risk_tolerance_retirement">
+                                        <option value="conservative">Conservative</option>
+                                        <option value="moderate" selected>Moderate</option>
+                                        <option value="aggressive">Aggressive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Insurance Planning Section -->
+                        <div class="form-group" id="insuranceSection" style="display: none;">
+                            <h3>Insurance Planning Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Number of Dependents</label>
+                                    <input type="number" id="num_dependents" name="num_dependents" min="0">
+                                </div>
+                                <div class="form-field">
+                                    <label>Outstanding Debts ($)</label>
+                                    <input type="number" id="debts" name="debts" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estate Planning Section -->
+                        <div class="form-group" id="estateSection" style="display: none;">
+                            <h3>Estate Planning Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Number of Children</label>
+                                    <input type="number" id="num_children" name="num_children" min="0">
+                                </div>
+                                <div class="form-field">
+                                    <label>Children Ages (comma-separated)</label>
+                                    <input type="text" id="children_ages" name="children_ages" placeholder="e.g., 5,12,18">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wealth Management Section -->
+                        <div class="form-group" id="wealthSection" style="display: none;">
+                            <h3>Wealth Management Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Risk Tolerance</label>
+                                    <select id="risk_tolerance_wealth" name="risk_tolerance_wealth">
+                                        <option value="conservative">Conservative</option>
+                                        <option value="moderate" selected>Moderate</option>
+                                        <option value="aggressive">Aggressive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-large">
+                                <i class="fas fa-play"></i> Generate My Financial Plan
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </div>
+
+        <!-- Results Page -->
+        <div id="resultsPage" class="page">
+            <div class="container">
+                <div class="results-header">
+                    <h1>Your Financial Plan</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="showDownloadMenu()">
+                            <i class="fas fa-download"></i> Download Plan
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetApp()">
+                            <i class="fas fa-home"></i> New Plan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Executive Summary -->
+                <section class="results-section">
+                    <h2>Executive Summary</h2>
+                    <div class="summary-content" id="executiveSummary">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </section>
+
+                <!-- Visualizations -->
+                <section class="results-section">
+                    <h2>Financial Visualizations</h2>
+                    <div class="charts-grid">
+                        <div class="chart-card" id="netWorthChart"></div>
+                        <div class="chart-card" id="retirementChart"></div>
+                        <div class="chart-card" id="allocationChart"></div>
+                        <div class="chart-card" id="budgetChart"></div>
+                        <div class="chart-card" id="insuranceChart"></div>
+                        <div class="chart-card" id="educationChart"></div>
+                    </div>
+                </section>
+
+                <!-- Detailed Plans -->
+                <section class="results-section">
+                    <h2>Detailed Planning Summaries</h2>
+                    <div class="tabs">
+                        <div class="tab-buttons" id="planTabs">
+                            <!-- Tabs will be generated here -->
+                        </div>
+                        <div class="tab-content" id="planContent">
+                            <!-- Tab content will be generated here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Chat Section -->
+                <section class="results-section">
+                    <h2>Chat with Your Financial Advisor</h2>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-area">
+                            <form id="chatForm" onsubmit="sendMessage(event)">
+                                <div class="input-group">
+                                    <input 
+                                        type="text" 
+                                        id="chatInput" 
+                                        placeholder="Ask a follow-up question about your plan..." 
+                                        autocomplete="off"
+                                    >
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i> Send
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Generating your personalized financial plan...</p>
+            <p class="spinner-subtext">This may take a moment as our AI agents analyze your information</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
