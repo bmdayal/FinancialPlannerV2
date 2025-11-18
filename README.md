@@ -1,118 +1,51 @@
-# Financial Planner AI# Financial Planner AI# 🏦 Financial Planner AI - Agentic Financial Planning System
+# 🏦 Financial Planner AI - Agentic Financial Planning System
 
+![Financial Planner Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Flask](https://img.shields.io/badge/Flask-3.1.2-lightgrey)
+![LangChain](https://img.shields.io/badge/LangChain-Latest-orange)
 
+A comprehensive financial planning application powered by **Agentic AI** using **LangChain** and **OpenAI GPT-4**. This system employs multiple specialized AI agents to create personalized financial plans across various life goals.
 
-A comprehensive financial planning application powered by specialized AI agents built with LangChain, LangGraph, and OpenAI.
-
-
-
-## Quick StartA comprehensive financial planning application powered by specialized AI agents built with LangChain, LangGraph, and OpenAI.A comprehensive financial planning application powered by **Agentic AI** using **LangChain** and **OpenAI GPT-4**. This system employs multiple specialized AI agents to create personalized financial plans across various life goals.
-
-
+## 🚀 Quick Start
 
 1. **Get OpenAI API Key**: Visit https://platform.openai.com/api-keys
-
 2. **Navigate to app**: `cd web_app`
-
-3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`## Quick Start![Financial Planner Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-
+3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`
 4. **Install**: `pip install -r requirements.txt`
-
-5. **Run**: `python app.py`![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-
+5. **Run**: `python app.py`
 6. **Open**: http://localhost:5000
 
-1. **Get OpenAI API Key**: Visit https://platform.openai.com/api-keys![Flask](https://img.shields.io/badge/Flask-3.1.2-lightgrey)
+## 🌟 Key Features
 
-## Features
-
-2. **Navigate to app**: `cd web_app`  ![LangChain](https://img.shields.io/badge/LangChain-Latest-orange)
-
-🤖 **6 Specialized AI Agents**
-
-- Retirement Planning - Portfolio design and withdrawal strategies3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`
-
-- Insurance Planning - Coverage analysis and recommendations
-
-- Estate Planning - Wealth transfer and legacy planning4. **Install**: `pip install -r requirements.txt`## 🌟 Key Features
-
-- Wealth Management - Investment allocation and risk management
-
-- Education Planning - 529 plans and scholarship strategies5. **Run**: `python app.py`
-
-- Tax Planning - Year-round optimization and deduction strategies
-
-6. **Open**: http://localhost:5000### 🤖 **Agentic AI System**
-
-📊 **Interactive Visualizations** - Charts and projections for all planning areas
-
+### 🤖 **Agentic AI System**
 - **Multiple Specialized Agents**: Each financial goal handled by dedicated AI agents
-
-💬 **AI Chat Interface** - Ask follow-up questions about your personalized plan
-
-## Features- **LangChain Integration**: Advanced prompt engineering and conversation management
-
-📄 **Export Options** - Download complete plans as PDF or JSON
-
+- **LangChain Integration**: Advanced prompt engineering and conversation management
 - **Context-Aware Planning**: AI maintains conversation history and user context
+- **Intelligent Recommendations**: Data-driven insights based on user profile
 
-## Tech Stack
-
-🤖 **6 Specialized AI Agents**- **Intelligent Recommendations**: Data-driven insights based on user profile
-
-- **Backend**: Flask, LangChain, LangGraph
-
-- **AI**: OpenAI GPT models- Retirement Planning - Portfolio design and withdrawal strategies
-
-- **Frontend**: Vanilla JavaScript, Plotly.js
-
-- **Export**: ReportLab (PDF), python-docx (Word)- Insurance Planning - Coverage analysis and recommendations  ### 📊 **Financial Planning Modules**
-
-
-
-## Important Note- Estate Planning - Wealth transfer and legacy planning- **Retirement Planning** - 401k optimization, pension planning, retirement income strategies
-
-
-
-This provides educational financial insights. Always consult qualified financial professionals for investment decisions.- Wealth Management - Investment allocation and risk management- **Homeownership** - Down payment planning, mortgage analysis, property investment
-
-- Education Planning - 529 plans and scholarship strategies- **Education Savings** - 529 plans, education cost projections, funding strategies
-
-- Tax Planning - Year-round optimization and deduction strategies- **Emergency Fund** - Risk assessment, liquidity planning, emergency preparedness
-
+### 📊 **Financial Planning Modules**
+- **Retirement Planning** - 401k optimization, pension planning, retirement income strategies
+- **Homeownership** - Down payment planning, mortgage analysis, property investment
+- **Education Savings** - 529 plans, education cost projections, funding strategies
+- **Emergency Fund** - Risk assessment, liquidity planning, emergency preparedness
 - **Investment Portfolio** - Asset allocation, risk tolerance, diversification strategies
+- **Debt Management** - Payment strategies, consolidation analysis, debt elimination plans
 
-📊 **Interactive Visualizations** - Charts and projections for all planning areas- **Debt Management** - Payment strategies, consolidation analysis, debt elimination plans
-
-
-
-💬 **AI Chat Interface** - Ask follow-up questions about your personalized plan### 💼 **Professional Export System**
-
+### 💼 **Professional Export System**
 - **PDF Reports** - Professionally formatted documents with visual hierarchy
-
-📄 **Export Options** - Download complete plans as PDF or JSON- **Word Documents** - Editable DOCX files with rich formatting and tables
-
+- **Word Documents** - Editable DOCX files with rich formatting and tables
 - **Financial Data Highlighting** - Automatic formatting of currency, percentages, and key metrics
+- **Client-Ready Output** - Professional styling suitable for client presentations
 
-## Tech Stack- **Client-Ready Output** - Professional styling suitable for client presentations
-
-
-
-- **Backend**: Flask, LangChain, LangGraph### 🎨 **Modern Web Interface**
-
-- **AI**: OpenAI GPT models- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
-
-- **Frontend**: Vanilla JavaScript, Plotly.js- **Real-Time Chat** - Interactive conversation with AI agents
-
-- **Export**: ReportLab (PDF), python-docx (Word)- **Loading Animations** - Visual feedback during AI processing
-
+### 🎨 **Modern Web Interface**
+- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
+- **Real-Time Chat** - Interactive conversation with AI agents
+- **Loading Animations** - Visual feedback during AI processing
 - **Progress Indicators** - Step-by-step planning guidance
+- **Interactive Visualizations** - Charts and graphs for financial projections
 
-## Important Note- **Interactive Visualizations** - Charts and graphs for financial projections
-
-
-
-This provides educational financial insights. Always consult qualified financial professionals for investment decisions.## 🚀 Quick Start
+## 🚀 Detailed Installation
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -123,24 +56,27 @@ This provides educational financial insights. Always consult qualified financial
 
 1. **Clone the Repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/bmdayal/FinancialPlannerV2.git
    cd FinancialPlannerDemo
    ```
 
 2. **Set Up Virtual Environment**
-   ```bash
+   ```powershell
    cd web_app
    python -m venv venv
    
-   # Windows
-   .\venv\Scripts\activate
+   # Windows PowerShell
+   .\venv\Scripts\Activate.ps1
+   
+   # Windows Command Prompt
+   .\venv\Scripts\activate.bat
    
    # macOS/Linux
    source venv/bin/activate
    ```
 
 3. **Install Dependencies**
-   ```bash
+   ```powershell
    pip install -r requirements.txt
    ```
 
@@ -152,7 +88,7 @@ This provides educational financial insights. Always consult qualified financial
    ```
 
 5. **Run the Application**
-   ```bash
+   ```powershell
    python app.py
    ```
 
@@ -218,11 +154,11 @@ FinancialPlannerDemo/
 │   ├── config.py              # Configuration settings
 │   ├── requirements.txt        # Python dependencies
 │   ├── static/                # CSS, JS, assets
+│   │   ├── css/               # Stylesheets
+│   │   └── js/                # JavaScript files
 │   ├── templates/             # HTML templates
-│   └── venv/                  # Virtual environment
-├── docs/                      # Documentation
-├── diagrams/                  # Architecture diagrams
-├── ARCHITECTURE.md            # Technical architecture
+│   └── flask_session/         # Session data
+├── flask_session/             # Session storage
 └── README.md                  # This file
 ```
 
@@ -249,22 +185,32 @@ FinancialPlannerDemo/
 
 ## 📚 Documentation
 
-- [Developer Guide](docs/DEVELOPER.md) - Setup, debugging, and development
-- [User Guide](docs/USER_GUIDE.md) - Detailed feature explanations
-- [Architecture](ARCHITECTURE.md) - Technical system design
-- [API Documentation](docs/API.md) - REST endpoint reference
+For detailed information about the application:
+- Check the code comments in `web_app/` for implementation details
+- Review `web_app/QUICKSTART.md` for additional setup instructions
+- Explore the Flask application structure in the `web_app/` directory
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch:
+   ```powershell
+   git checkout -b feature/amazing-feature
+   ```
 3. Make your changes
-4. Run tests and ensure code quality
-5. Submit a pull request
+4. Commit your changes:
+   ```powershell
+   git commit -m "Add amazing feature"
+   ```
+5. Push to the branch:
+   ```powershell
+   git push origin feature/amazing-feature
+   ```
+6. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is open source. Please check with the repository owner for specific licensing terms.
 
 ## ⚠️ Important Notes
 
@@ -276,8 +222,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 - **Issues**: Report bugs and feature requests via GitHub Issues
-- **Documentation**: Check the `docs/` folder for detailed guides
-- **Developer Help**: See `docs/DEVELOPER.md` for setup and debugging
+- **Code Documentation**: Check inline comments and docstrings in the source code
+- **Setup Help**: Review the installation steps above or check `web_app/QUICKSTART.md`
 
 ---
 
