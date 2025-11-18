@@ -1,42 +1,80 @@
-# Financial Planner AI# 🏦 Financial Planner AI - Agentic Financial Planning System
+# Financial Planner AI# Financial Planner AI# 🏦 Financial Planner AI - Agentic Financial Planning System
 
 
 
-A comprehensive financial planning application powered by specialized AI agents built with LangChain, LangGraph, and OpenAI.A comprehensive financial planning application powered by **Agentic AI** using **LangChain** and **OpenAI GPT-4**. This system employs multiple specialized AI agents to create personalized financial plans across various life goals.
+A comprehensive financial planning application powered by specialized AI agents built with LangChain, LangGraph, and OpenAI.
 
 
 
-## Quick Start![Financial Planner Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+## Quick StartA comprehensive financial planning application powered by specialized AI agents built with LangChain, LangGraph, and OpenAI.A comprehensive financial planning application powered by **Agentic AI** using **LangChain** and **OpenAI GPT-4**. This system employs multiple specialized AI agents to create personalized financial plans across various life goals.
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+
+
+1. **Get OpenAI API Key**: Visit https://platform.openai.com/api-keys
+
+2. **Navigate to app**: `cd web_app`
+
+3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`## Quick Start![Financial Planner Demo](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+
+4. **Install**: `pip install -r requirements.txt`
+
+5. **Run**: `python app.py`![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+
+6. **Open**: http://localhost:5000
 
 1. **Get OpenAI API Key**: Visit https://platform.openai.com/api-keys![Flask](https://img.shields.io/badge/Flask-3.1.2-lightgrey)
 
+## Features
+
 2. **Navigate to app**: `cd web_app`  ![LangChain](https://img.shields.io/badge/LangChain-Latest-orange)
 
-3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`
+🤖 **6 Specialized AI Agents**
 
-4. **Install**: `pip install -r requirements.txt`## 🌟 Key Features
+- Retirement Planning - Portfolio design and withdrawal strategies3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`
 
-5. **Run**: `python app.py`
+- Insurance Planning - Coverage analysis and recommendations
+
+- Estate Planning - Wealth transfer and legacy planning4. **Install**: `pip install -r requirements.txt`## 🌟 Key Features
+
+- Wealth Management - Investment allocation and risk management
+
+- Education Planning - 529 plans and scholarship strategies5. **Run**: `python app.py`
+
+- Tax Planning - Year-round optimization and deduction strategies
 
 6. **Open**: http://localhost:5000### 🤖 **Agentic AI System**
 
+📊 **Interactive Visualizations** - Charts and projections for all planning areas
+
 - **Multiple Specialized Agents**: Each financial goal handled by dedicated AI agents
+
+💬 **AI Chat Interface** - Ask follow-up questions about your personalized plan
 
 ## Features- **LangChain Integration**: Advanced prompt engineering and conversation management
 
+📄 **Export Options** - Download complete plans as PDF or JSON
+
 - **Context-Aware Planning**: AI maintains conversation history and user context
+
+## Tech Stack
 
 🤖 **6 Specialized AI Agents**- **Intelligent Recommendations**: Data-driven insights based on user profile
 
-- Retirement Planning - Portfolio design and withdrawal strategies
+- **Backend**: Flask, LangChain, LangGraph
 
-- Insurance Planning - Coverage analysis and recommendations  ### 📊 **Financial Planning Modules**
+- **AI**: OpenAI GPT models- Retirement Planning - Portfolio design and withdrawal strategies
 
-- Estate Planning - Wealth transfer and legacy planning- **Retirement Planning** - 401k optimization, pension planning, retirement income strategies
+- **Frontend**: Vanilla JavaScript, Plotly.js
 
-- Wealth Management - Investment allocation and risk management- **Homeownership** - Down payment planning, mortgage analysis, property investment
+- **Export**: ReportLab (PDF), python-docx (Word)- Insurance Planning - Coverage analysis and recommendations  ### 📊 **Financial Planning Modules**
+
+
+
+## Important Note- Estate Planning - Wealth transfer and legacy planning- **Retirement Planning** - 401k optimization, pension planning, retirement income strategies
+
+
+
+This provides educational financial insights. Always consult qualified financial professionals for investment decisions.- Wealth Management - Investment allocation and risk management- **Homeownership** - Down payment planning, mortgage analysis, property investment
 
 - Education Planning - 529 plans and scholarship strategies- **Education Savings** - 529 plans, education cost projections, funding strategies
 
