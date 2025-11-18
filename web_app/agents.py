@@ -111,6 +111,138 @@ def calculate_wealth_allocation(total_assets: float, age: int, risk_tolerance: s
 - Bonds/Fixed Income: {bond_pct}% (${bond_amount:,.2f})
 - Rebalance: Quarterly or when allocation drifts 5%+"""
 
+@tool
+def calculate_529_plan(num_children: int, children_ages: List[int], 
+                      annual_contribution: float = 0, state: str = "National") -> str:
+    """Calculate 529 education savings plan projections and benefits."""
+    total_needed = 0
+    total_savings = 0
+    details = []
+    
+    for i, age in enumerate(children_ages):
+        years_until_college = max(0, 18 - age)
+        
+        # Future college cost (assuming 5% annual increase)
+        current_cost = 35000  # Average annual college cost
+        future_cost = current_cost * ((1.05) ** years_until_college)
+        four_year_total = future_cost * 4
+        total_needed += four_year_total
+        
+        # 529 savings projection (assuming 6% annual return)
+        if years_until_college > 0:
+            monthly_contribution = annual_contribution / 12 / num_children
+            future_value = monthly_contribution * (((1 + 0.06/12) ** (years_until_college * 12) - 1) / (0.06/12))
+            total_savings += future_value
+            
+            details.append(f"Child {i+1} (age {age}): ${four_year_total:,.0f} needed, ${future_value:,.0f} projected savings")
+        else:
+            details.append(f"Child {i+1} (age {age}): Currently in college - ${four_year_total:,.0f} needed")
+    
+    shortfall = max(0, total_needed - total_savings)
+    
+    return f"""529 Education Savings Analysis:
+{chr(10).join(details)}
+- Total education costs projected: ${total_needed:,.0f}
+- Projected 529 savings: ${total_savings:,.0f}
+- Funding gap: ${shortfall:,.0f}
+- Tax benefits: State deduction varies by state
+- Recommended: {'Increase contributions' if shortfall > 0 else 'On track for funding'}"""
+
+@tool
+def calculate_tax_optimization(annual_income: float, filing_status: str = "married", 
+                              retirement_contributions: float = 0, charitable_giving: float = 0) -> str:
+    """Calculate tax optimization strategies and potential savings."""
+    # 2024 tax brackets (simplified)
+    if filing_status.lower() == "married":
+        standard_deduction = 29200
+        brackets = [(22275, 0.10), (89450, 0.12), (190750, 0.22), (364200, 0.24), (462500, 0.32), (693750, 0.35)]
+    else:
+        standard_deduction = 14600
+        brackets = [(11000, 0.10), (44725, 0.12), (95375, 0.22), (182050, 0.24), (231250, 0.32), (578125, 0.35)]
+    
+    # Calculate current tax
+    taxable_income = max(0, annual_income - standard_deduction - retirement_contributions)
+    current_tax = 0
+    remaining_income = taxable_income
+    
+    for bracket_max, rate in brackets:
+        if remaining_income > 0:
+            taxable_at_bracket = min(remaining_income, bracket_max)
+            current_tax += taxable_at_bracket * rate
+            remaining_income -= taxable_at_bracket
+    
+    # Tax optimization strategies
+    max_401k = 23000  # 2024 limit
+    max_ira = 7000    # 2024 limit
+    additional_retirement = max_401k - retirement_contributions
+    
+    # Calculate tax savings from additional contributions
+    marginal_rate = 0.22  # Approximate marginal rate for middle income
+    retirement_tax_savings = min(additional_retirement, annual_income * 0.15) * marginal_rate
+    charitable_tax_savings = charitable_giving * marginal_rate if charitable_giving > standard_deduction else 0
+    
+    return f"""Tax Optimization Analysis:
+- Current taxable income: ${taxable_income:,.0f}
+- Estimated current tax: ${current_tax:,.0f}
+- Marginal tax rate: {marginal_rate:.0%}
+
+Optimization Opportunities:
+- Additional 401(k) contributions: ${additional_retirement:,.0f} (saves ${retirement_tax_savings:,.0f})
+- IRA contribution potential: ${max_ira:,.0f} (saves ${max_ira * marginal_rate:,.0f})
+- Charitable giving tax benefit: ${charitable_tax_savings:,.0f}
+- HSA max contribution: $4,300 (saves ${4300 * marginal_rate:,.0f})
+
+Recommended: Maximize pre-tax retirement contributions and consider tax-loss harvesting"""
+
+@tool
+def analyze_scholarship_opportunities(student_age: int, gpa: float = 0.0, 
+                                    family_income: float = 0, activities: str = "") -> str:
+    """Analyze scholarship opportunities and financial aid eligibility."""
+    opportunities = []
+    
+    # Merit-based scholarships
+    if gpa >= 3.8:
+        opportunities.append("High academic achievement scholarships (up to $20,000/year)")
+    elif gpa >= 3.5:
+        opportunities.append("Academic merit scholarships (up to $10,000/year)")
+    elif gpa >= 3.0:
+        opportunities.append("Merit-based awards (up to $5,000/year)")
+    
+    # Need-based aid
+    if family_income < 60000:
+        opportunities.append("Maximum Pell Grant eligibility (~$7,400/year)")
+        opportunities.append("State need-based grants")
+    elif family_income < 100000:
+        opportunities.append("Partial need-based aid eligibility")
+    
+    # Activity-based
+    if "sports" in activities.lower():
+        opportunities.append("Athletic scholarships (varies by sport and division)")
+    if "music" in activities.lower() or "art" in activities.lower():
+        opportunities.append("Arts and performance scholarships")
+    if "volunteer" in activities.lower() or "community" in activities.lower():
+        opportunities.append("Community service scholarships")
+    
+    # Other opportunities
+    opportunities.extend([
+        "Local community foundation scholarships",
+        "Professional association scholarships",
+        "Employer tuition assistance programs"
+    ])
+    
+    return f"""Scholarship and Financial Aid Analysis:
+Student Profile: Age {student_age}, GPA {gpa:.1f}, Family Income ${family_income:,.0f}
+
+Eligible Opportunities:
+{chr(10).join([f'- {opp}' for opp in opportunities])}
+
+Next Steps:
+- Complete FAFSA for need-based aid
+- Research school-specific scholarships
+- Apply to external scholarship databases
+- Consider community college transfer option
+- Explore work-study programs"""
+
 
 # ============================================================================
 # AGENT STATE
@@ -130,7 +262,12 @@ class AgentState(TypedDict):
 # ============================================================================
 
 class RetirementAgent:
-    """Retirement Planning Specialist Agent"""
+    """Retirement Planning Specialist Agent
+    
+    Designs and monitors retirement portfolios, projecting future needs and adapting strategies 
+    for a secure and comfortable post-work future. It considers factors like Social Security 
+    optimization, required minimum distributions, and sustainable withdrawal rates.
+    """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
         self.tools = [calculate_retirement_needs, calculate_wealth_allocation]
@@ -138,7 +275,9 @@ class RetirementAgent:
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
 
-        prompt = f"""You are a Retirement Planning Specialist. Analyze the user's information and create a comprehensive retirement plan.
+        prompt = f"""You are a Retirement Planning Specialist who designs and monitors retirement portfolios, 
+projecting future needs and adapting strategies for a secure and comfortable post-work future. 
+You consider factors like Social Security optimization, required minimum distributions, and sustainable withdrawal rates.
 
 User Information:
 - Age: {user_info.get('age', 'Not provided')}
@@ -148,7 +287,8 @@ User Information:
 - Risk Tolerance: {user_info.get('risk_tolerance', 'moderate')}
 
 Use the available tools to calculate retirement needs and recommend asset allocation.
-Provide a detailed retirement plan summary."""
+Provide a detailed retirement plan summary including Social Security optimization strategies, 
+required minimum distribution planning, and sustainable withdrawal rate recommendations."""
 
         tools_to_use = self.tools
         llm_with_tools = self.llm.bind_tools(tools_to_use)
@@ -232,7 +372,12 @@ Create a comprehensive insurance planning summary covering life, health, disabil
 
 
 class EstateAgent:
-    """Estate Planning Specialist Agent"""
+    """Estate Planning Specialist Agent
+    
+    Assists in organizing assets, wills, and trusts to ensure seamless transfer of wealth and 
+    fulfillment of client wishes. This includes legacy planning and ensuring beneficiaries are 
+    properly set up.
+    """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
         self.tools = [calculate_estate_tax, calculate_education_fund]
@@ -240,7 +385,9 @@ class EstateAgent:
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
 
-        prompt = f"""You are an Estate Planning Specialist. Create a comprehensive estate plan.
+        prompt = f"""You are an Estate Planning Specialist who assists in organizing assets, wills, 
+and trusts to ensure seamless transfer of wealth and fulfillment of client wishes. You focus on 
+legacy planning and ensuring beneficiaries are properly set up.
 
 User Information:
 - Age: {user_info.get('age', 'Not provided')}
@@ -249,7 +396,8 @@ User Information:
 - Children Ages: {user_info.get('children_ages', [])}
 
 Use the available tools to calculate estate taxes and education funding needs.
-Provide recommendations for wills, trusts, beneficiaries, and legacy planning."""
+Provide comprehensive recommendations for wills, trusts, beneficiary designations, 
+legacy planning strategies, and seamless wealth transfer mechanisms."""
 
         llm_with_tools = self.llm.bind_tools(self.tools)
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
@@ -281,7 +429,12 @@ education funding, and tax minimization strategies."""
 
 
 class WealthAgent:
-    """Personal Wealth Management Specialist Agent"""
+    """Personal Wealth Management Specialist Agent
+    
+    Manages investments, tracks financial goals, and provides personalized advice for growing wealth. 
+    It adapts to market changes in real-time, adjusting strategies based on current conditions and 
+    the client's risk tolerance.
+    """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
         self.tools = [calculate_wealth_allocation]
@@ -289,7 +442,9 @@ class WealthAgent:
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
 
-        prompt = f"""You are a Personal Wealth Management Specialist. Create a comprehensive wealth management strategy.
+        prompt = f"""You are a Personal Wealth Management Specialist who manages investments, tracks 
+financial goals, and provides personalized advice for growing wealth. You adapt to market changes 
+in real-time, adjusting strategies based on current conditions and the client's risk tolerance.
 
 User Information:
 - Age: {user_info.get('age', 'Not provided')}
@@ -298,11 +453,12 @@ User Information:
 - Risk Tolerance: {user_info.get('risk_tolerance', 'moderate')}
 
 Use the asset allocation tool and provide recommendations for:
-- Investment strategy
-- Tax optimization
-- Cash flow management
-- Diversification
-- Regular portfolio review schedule"""
+- Investment strategy that adapts to market conditions
+- Real-time portfolio adjustments based on risk tolerance
+- Financial goal tracking and progress monitoring
+- Tax optimization strategies
+- Cash flow management and diversification
+- Regular portfolio review and rebalancing schedule"""
 
         llm_with_tools = self.llm.bind_tools(self.tools)
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
@@ -330,6 +486,121 @@ diversification recommendations, and monitoring schedule."""
         return state
 
 
+class EducationAgent:
+    """Education Planning Specialist Agent
+    
+    Helps clients plan and save for educational expenses. It explores options for tuition funding, 
+    researches scholarships, and develops loan strategies based on individual needs and timelines. 
+    Whether it's 529 plans or other education savings vehicles, this agent knows the options.
+    """
+    def __init__(self, llm: ChatOpenAI):
+        self.llm = llm
+        self.tools = [calculate_education_fund, calculate_529_plan, analyze_scholarship_opportunities]
+
+    def process(self, state: AgentState) -> AgentState:
+        user_info = state["user_info"]
+
+        prompt = f"""You are an Education Planning Specialist who helps clients plan and save for 
+educational expenses. You explore options for tuition funding, research scholarships, and develop 
+loan strategies based on individual needs and timelines. You're an expert in 529 plans and other 
+education savings vehicles.
+
+User Information:
+- Number of Children: {user_info.get('num_children', 0)}
+- Children Ages: {user_info.get('children_ages', [])}
+- Annual Income: ${user_info.get('annual_income', 0):,.2f}
+- Current Education Savings: ${user_info.get('education_savings', 0):,.2f}
+- Annual Education Contribution: ${user_info.get('annual_education_contribution', 0):,.2f}
+
+Use the available tools to analyze education funding needs, 529 plan projections, and scholarship opportunities.
+Provide comprehensive education planning recommendations including funding strategies, 
+scholarship research guidance, and loan optimization approaches."""
+
+        llm_with_tools = self.llm.bind_tools(self.tools)
+        response = llm_with_tools.invoke([HumanMessage(content=prompt)])
+
+        tool_results = []
+        if response.tool_calls:
+            for tool_call in response.tool_calls:
+                tool_name = tool_call["name"]
+                for tool in self.tools:
+                    if tool.name == tool_name:
+                        result = tool.invoke(tool_call["args"])
+                        tool_results.append(result)
+
+            summary_prompt = f"""Based on these calculations:
+{chr(10).join(tool_results)}
+
+Create a comprehensive education planning summary including 529 plan strategies, 
+scholarship opportunities, loan optimization, and timeline-based funding approaches."""
+
+            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+            summary = final_response.content
+        else:
+            summary = response.content
+
+        state["plan_summaries"]["Education Planning"] = summary
+        state["messages"].append(AIMessage(content="✓ Education Planning Complete"))
+
+        return state
+
+
+class TaxAgent:
+    """Tax Planning Specialist Agent
+    
+    Optimizes tax strategies, identifies deductions, and assists with compliance to minimize 
+    liabilities and maximize savings year-round. This is particularly valuable because tax 
+    implications touch almost every financial decision. This agent ensures we're making 
+    tax-efficient choices across the entire financial plan.
+    """
+    def __init__(self, llm: ChatOpenAI):
+        self.llm = llm
+        self.tools = [calculate_tax_optimization]
+
+    def process(self, state: AgentState) -> AgentState:
+        user_info = state["user_info"]
+
+        prompt = f"""You are a Tax Planning Specialist who optimizes tax strategies, identifies 
+deductions, and assists with compliance to minimize liabilities and maximize savings year-round. 
+Tax implications touch almost every financial decision, so you ensure tax-efficient choices 
+across the entire financial plan.
+
+User Information:
+- Annual Income: ${user_info.get('annual_income', 0):,.2f}
+- Filing Status: {user_info.get('filing_status', 'married')}
+- Current Retirement Contributions: ${user_info.get('retirement_contributions', 0):,.2f}
+- Charitable Giving: ${user_info.get('charitable_giving', 0):,.2f}
+
+Use the tax optimization tool to analyze current tax situation and identify opportunities.
+Provide comprehensive tax planning strategies including deduction optimization, 
+retirement contribution strategies, tax-loss harvesting, and year-round tax planning approaches."""
+
+        llm_with_tools = self.llm.bind_tools(self.tools)
+        response = llm_with_tools.invoke([HumanMessage(content=prompt)])
+
+        tool_results = []
+        if response.tool_calls:
+            for tool_call in response.tool_calls:
+                result = calculate_tax_optimization.invoke(tool_call["args"])
+                tool_results.append(result)
+
+            summary_prompt = f"""Based on these calculations:
+{chr(10).join(tool_results)}
+
+Create a comprehensive tax planning summary including optimization strategies, 
+deduction identification, compliance assistance, and year-round tax-efficient decision making."""
+
+            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+            summary = final_response.content
+        else:
+            summary = response.content
+
+        state["plan_summaries"]["Tax Planning"] = summary
+        state["messages"].append(AIMessage(content="✓ Tax Planning Complete"))
+
+        return state
+
+
 # ============================================================================
 # ORCHESTRATOR AGENT
 # ============================================================================
@@ -342,6 +613,8 @@ class OrchestratorAgent:
         self.insurance_agent = InsuranceAgent(llm)
         self.estate_agent = EstateAgent(llm)
         self.wealth_agent = WealthAgent(llm)
+        self.education_agent = EducationAgent(llm)
+        self.tax_agent = TaxAgent(llm)
 
     def route(self, state: AgentState) -> AgentState:
         """Route to appropriate agents based on selected plans"""
@@ -359,6 +632,12 @@ class OrchestratorAgent:
         if "Personal Wealth Management" in selected and "Personal Wealth Management" not in state["plan_summaries"]:
             state = self.wealth_agent.process(state)
 
+        if "Education Planning" in selected and "Education Planning" not in state["plan_summaries"]:
+            state = self.education_agent.process(state)
+
+        if "Tax Planning" in selected and "Tax Planning" not in state["plan_summaries"]:
+            state = self.tax_agent.process(state)
+
         # Generate integrated summary
         state = self.create_integrated_summary(state)
 
@@ -372,6 +651,10 @@ class OrchestratorAgent:
         prompt = f"""You are a Senior Financial Advisor. Create an integrated Executive Summary
 that combines all the individual plan summaries into a cohesive financial plan.
 
+Each of our specialized agents brings expert knowledge to the table - just like you'd have different 
+advisors in a traditional wealth management firm. The difference is that our AI agents can work 
+simultaneously, share information instantly, and provide recommendations in minutes rather than weeks.
+
 User Profile:
 {json.dumps(user_info, indent=2)}
 
@@ -381,9 +664,10 @@ Individual Plan Summaries:
 Create an Executive Summary that:
 1. Provides an overview of the client's financial situation
 2. Highlights key recommendations from each planning area
-3. Identifies synergies and priorities across plans
+3. Identifies synergies and priorities across plans (especially tax implications that touch every decision)
 4. Provides a clear action plan with timeline
-5. Notes any areas requiring immediate attention"""
+5. Notes any areas requiring immediate attention
+6. Emphasizes how our specialized agents work together for comprehensive planning"""
 
         response = self.llm.invoke([HumanMessage(content=prompt)])
         state["plan_summaries"]["Executive Summary"] = response.content

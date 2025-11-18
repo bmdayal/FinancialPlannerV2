@@ -87,6 +87,10 @@ function updateFormVisibility() {
         selectedPlans.has('estate') ? 'block' : 'none';
     document.getElementById('wealthSection').style.display = 
         selectedPlans.has('wealth') ? 'block' : 'none';
+    document.getElementById('educationSection').style.display = 
+        selectedPlans.has('education') ? 'block' : 'none';
+    document.getElementById('taxSection').style.display = 
+        selectedPlans.has('tax') ? 'block' : 'none';
 }
 
 // ============================================================================
@@ -129,6 +133,21 @@ async function handleFormSubmit(event) {
     if (selectedPlans.has('wealth')) {
         userInfo.risk_tolerance = document.getElementById('risk_tolerance_wealth').value;
         userInfo.total_assets = userInfo.savings;
+    }
+    
+    if (selectedPlans.has('education')) {
+        userInfo.num_children = parseInt(document.getElementById('num_children_edu').value) || 0;
+        const agesInput = document.getElementById('children_ages_edu').value;
+        userInfo.children_ages = agesInput ? agesInput.split(',').map(a => parseInt(a.trim())) : [];
+        userInfo.education_savings = parseFloat(document.getElementById('education_savings').value) || 0;
+        userInfo.annual_education_contribution = parseFloat(document.getElementById('annual_education_contribution').value) || 0;
+    }
+    
+    if (selectedPlans.has('tax')) {
+        userInfo.filing_status = document.getElementById('filing_status').value;
+        userInfo.retirement_contributions = parseFloat(document.getElementById('retirement_contributions').value) || 0;
+        userInfo.charitable_giving = parseFloat(document.getElementById('charitable_giving').value) || 0;
+        userInfo.other_deductions = parseFloat(document.getElementById('other_deductions').value) || 0;
     }
     
     // Show loading spinner with progressive messages
@@ -245,6 +264,15 @@ function displayVisualizations(visualizations) {
         Plotly.newPlot(educationDiv, data.data, data.layout, { responsive: true });
     } else {
         document.getElementById('educationChart').style.display = 'none';
+    }
+
+    // Tax Optimization Chart
+    if (visualizations.tax_optimization) {
+        const taxDiv = document.getElementById('taxOptimizationChart');
+        const data = JSON.parse(visualizations.tax_optimization);
+        Plotly.newPlot(taxDiv, data.data, data.layout, { responsive: true });
+    } else {
+        document.getElementById('taxOptimizationChart').style.display = 'none';
     }
 }
 

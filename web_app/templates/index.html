@@ -128,6 +128,61 @@
                             </div>
                         </div>
 
+                        <!-- Education Planning Section -->
+                        <div class="form-group" id="educationSection" style="display: none;">
+                            <h3>Education Planning Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Number of Children</label>
+                                    <input type="number" id="num_children_edu" name="num_children_edu" min="0">
+                                </div>
+                                <div class="form-field">
+                                    <label>Children Ages (comma-separated)</label>
+                                    <input type="text" id="children_ages_edu" name="children_ages_edu" placeholder="e.g., 5,12,18">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Current Education Savings ($)</label>
+                                    <input type="number" id="education_savings" name="education_savings" min="0">
+                                </div>
+                                <div class="form-field">
+                                    <label>Annual Education Contribution ($)</label>
+                                    <input type="number" id="annual_education_contribution" name="annual_education_contribution" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tax Planning Section -->
+                        <div class="form-group" id="taxSection" style="display: none;">
+                            <h3>Tax Planning Information</h3>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Filing Status</label>
+                                    <select id="filing_status" name="filing_status">
+                                        <option value="single">Single</option>
+                                        <option value="married" selected>Married Filing Jointly</option>
+                                        <option value="married_separate">Married Filing Separately</option>
+                                        <option value="head_of_household">Head of Household</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label>Current Retirement Contributions ($)</label>
+                                    <input type="number" id="retirement_contributions" name="retirement_contributions" min="0">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label>Annual Charitable Giving ($)</label>
+                                    <input type="number" id="charitable_giving" name="charitable_giving" min="0">
+                                </div>
+                                <div class="form-field">
+                                    <label>Other Tax Deductions ($)</label>
+                                    <input type="number" id="other_deductions" name="other_deductions" min="0">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary btn-large">
                                 <i class="fas fa-play"></i> Generate My Financial Plan
@@ -171,6 +226,7 @@
                         <div class="chart-card" id="budgetChart"></div>
                         <div class="chart-card" id="insuranceChart"></div>
                         <div class="chart-card" id="educationChart"></div>
+                        <div class="chart-card" id="taxOptimizationChart"></div>
                     </div>
                 </section>
 

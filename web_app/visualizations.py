@@ -361,6 +361,98 @@ def create_monthly_budget_breakdown(user_info: Dict[str, Any]) -> str:
     return fig.to_json()
 
 
+def create_tax_optimization_chart(user_info: Dict[str, Any]) -> str:
+    """Create tax optimization comparison chart"""
+    annual_income = user_info.get('annual_income', 0)
+    filing_status = user_info.get('filing_status', 'married')
+    current_retirement = user_info.get('retirement_contributions', 0)
+    charitable_giving = user_info.get('charitable_giving', 0)
+    
+    # 2024 tax brackets (simplified)
+    if filing_status.lower() in ['married', 'married_jointly']:
+        standard_deduction = 29200
+        tax_brackets = [(22275, 0.10), (89450, 0.12), (190750, 0.22), (364200, 0.24)]
+    else:
+        standard_deduction = 14600
+        tax_brackets = [(11000, 0.10), (44725, 0.12), (95375, 0.22), (182050, 0.24)]
+    
+    def calculate_tax(income, deductions, retirement_contrib):
+        taxable_income = max(0, income - standard_deduction - deductions - retirement_contrib)
+        tax = 0
+        remaining = taxable_income
+        
+        for bracket_max, rate in tax_brackets:
+            if remaining > 0:
+                taxable_at_bracket = min(remaining, bracket_max)
+                tax += taxable_at_bracket * rate
+                remaining -= taxable_at_bracket
+            else:
+                break
+        return tax, taxable_income
+    
+    # Current situation
+    current_tax, current_taxable = calculate_tax(annual_income, charitable_giving, current_retirement)
+    
+    # Optimization scenarios
+    scenarios = [
+        ("Current", current_retirement, current_tax),
+        ("Max 401k", min(23000, annual_income * 0.15), 0),
+        ("Max 401k + IRA", min(30000, annual_income * 0.18), 0),
+        ("Max + Charitable", min(30000, annual_income * 0.18), 0),
+    ]
+    
+    # Calculate optimized scenarios
+    for i in range(1, len(scenarios)):
+        name, retirement_contrib, _ = scenarios[i]
+        additional_charitable = 5000 if "Charitable" in name else charitable_giving
+        tax, _ = calculate_tax(annual_income, additional_charitable, retirement_contrib)
+        scenarios[i] = (name, retirement_contrib, tax)
+    
+    scenario_names = [s[0] for s in scenarios]
+    taxes = [s[2] for s in scenarios]
+    savings = [current_tax - tax for tax in taxes]
+    
+    fig = go.Figure()
+    
+    # Tax liability bars
+    fig.add_trace(go.Bar(
+        name='Tax Liability',
+        x=scenario_names,
+        y=taxes,
+        marker_color='#FF6B6B',
+        yaxis='y'
+    ))
+    
+    # Tax savings line
+    fig.add_trace(go.Scatter(
+        name='Tax Savings',
+        x=scenario_names,
+        y=savings,
+        mode='lines+markers',
+        line=dict(color='#4ECDC4', width=3),
+        marker=dict(size=8),
+        yaxis='y2'
+    ))
+    
+    fig.update_layout(
+        title='Tax Optimization Strategies',
+        xaxis_title='Strategy',
+        yaxis=dict(
+            title='Annual Tax Liability ($)',
+            side='left'
+        ),
+        yaxis2=dict(
+            title='Tax Savings ($)',
+            side='right',
+            overlaying='y'
+        ),
+        hovermode='x unified',
+        legend=dict(x=0.02, y=0.98)
+    )
+    
+    return fig.to_json()
+
+
 def get_visualizations(user_info: Dict[str, Any], selected_plans: List[str]) -> Dict[str, str]:
     """Get all relevant visualizations based on selected plans"""
     visualizations = {}
@@ -388,5 +480,17 @@ def get_visualizations(user_info: Dict[str, Any], selected_plans: List[str]) -> 
             edu_viz = create_education_funding_chart(user_info)
             if edu_viz:
                 visualizations['education'] = edu_viz
+
+    # Education Planning visualizations
+    if "Education Planning" in selected_plans:
+        num_children = user_info.get('num_children', 0)
+        if num_children > 0:
+            edu_viz = create_education_funding_chart(user_info)
+            if edu_viz:
+                visualizations['education'] = edu_viz
+
+    # Tax Planning visualizations
+    if "Tax Planning" in selected_plans:
+        visualizations['tax_optimization'] = create_tax_optimization_chart(user_info)
 
     return visualizations

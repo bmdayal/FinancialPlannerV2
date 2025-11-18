@@ -66,7 +66,7 @@ def get_available_plans():
         {
             "id": "retirement",
             "name": "Retirement Planning",
-            "description": "Calculate retirement needs, savings goals, and withdrawal strategies",
+            "description": "Designs and monitors retirement portfolios, projecting future needs and adapting strategies for a secure and comfortable post-work future",
             "icon": "🏖️"
         },
         {
@@ -78,14 +78,26 @@ def get_available_plans():
         {
             "id": "estate",
             "name": "Estate Planning",
-            "description": "Plan for wealth transfer, education funding, and tax minimization",
+            "description": "Assists in organizing assets, wills, and trusts to ensure seamless transfer of wealth and fulfillment of client wishes",
             "icon": "📋"
         },
         {
             "id": "wealth",
             "name": "Personal Wealth Management",
-            "description": "Build comprehensive investment strategy and asset allocation",
+            "description": "Manages investments, tracks financial goals, and provides personalized advice for growing wealth, adapting to market changes in real-time",
             "icon": "💰"
+        },
+        {
+            "id": "education",
+            "name": "Education Planning", 
+            "description": "Helps clients plan and save for educational expenses, exploring tuition funding options, scholarships, and loan strategies",
+            "icon": "🎓"
+        },
+        {
+            "id": "tax",
+            "name": "Tax Planning",
+            "description": "Optimizes tax strategies, identifies deductions, and assists with compliance to minimize liabilities and maximize savings year-round",
+            "icon": "📊"
         }
     ]
     return jsonify(plans)
@@ -113,7 +125,9 @@ def start_planning():
             'retirement': 'Retirement Planning',
             'insurance': 'Insurance Planning',
             'estate': 'Estate Planning',
-            'wealth': 'Personal Wealth Management'
+            'wealth': 'Personal Wealth Management',
+            'education': 'Education Planning',
+            'tax': 'Tax Planning'
         }
         
         selected_plan_names = [plan_mapping.get(p) for p in selected_plans if p in plan_mapping]

@@ -1,44 +1,84 @@
-# Quick Start Guide - Financial Planner Web Application
+# Quick Start Guide# Quick Start Guide - Financial Planner Web Application
 
-## 🚀 Get Started in 5 Minutes
 
-### Prerequisites
-- Python 3.8 or higher
-- OpenAI API key (get one free at https://platform.openai.com)
 
-### Step 1: Get Your API Key
+## Setup (5 Minutes)## 🚀 Get Started in 5 Minutes
+
+
+
+1. **Get API Key**: https://platform.openai.com/api-keys### Prerequisites
+
+2. **Install**: `cd web_app && pip install -r requirements.txt`- Python 3.8 or higher
+
+3. **Configure**: Create `.env` file with `OPENAI_API_KEY=your-key-here`- OpenAI API key (get one free at https://platform.openai.com)
+
+4. **Run**: `python app.py`
+
+5. **Open**: http://localhost:5000### Step 1: Get Your API Key
+
 1. Go to https://platform.openai.com/api-keys
-2. Click "Create new secret key"
+
+## How to Use2. Click "Create new secret key"
+
 3. Copy the key (starts with `sk-`)
-4. Keep this safe - you'll need it in the next step
 
-### Step 2: Automated Setup (Recommended)
+1. **Select Plans**: Choose from 6 AI agents (Retirement, Insurance, Estate, Wealth, Education, Tax)4. Keep this safe - you'll need it in the next step
 
-#### On Windows (PowerShell or Command Prompt):
-```powershell
+2. **Fill Form**: Enter your financial details (form adapts to selected plans)
+
+3. **Generate Plan**: AI agents create personalized recommendations### Step 2: Automated Setup (Recommended)
+
+4. **Review Results**: Interactive charts, detailed summaries, and executive overview
+
+5. **Ask Questions**: Chat with AI advisor about your plan#### On Windows (PowerShell or Command Prompt):
+
+6. **Export**: Download as JSON```powershell
+
 cd web_app
-python setup.py
-# Follow the prompts and paste your API key when asked
-```
 
-#### On macOS/Linux:
-```bash
+## Featurespython setup.py
+
+# Follow the prompts and paste your API key when asked
+
+🤖 **6 AI Agents** - Specialized expertise for each planning area```
+
+📊 **Interactive Charts** - Visual projections and breakdowns  
+
+💬 **AI Chat** - Context-aware follow-up questions#### On macOS/Linux:
+
+📄 **Export** - JSON download for sharing with advisors```bash
+
 cd web_app
-python3 setup.py
-# Follow the prompts and paste your API key when asked
-```
 
-### Step 3: Run the Application
+## Troubleshootingpython3 setup.py
+
+# Follow the prompts and paste your API key when asked
+
+- **"API Key not set"** → Check `.env` file exists with correct key```
+
+- **"Module not found"** → Run `pip install -r requirements.txt`
+
+- **Port in use** → Change `APP_PORT=5001` in `.env`### Step 3: Run the Application
+
+- **Charts not showing** → Check browser console (F12) for errors
 
 #### Windows (PowerShell):
-```powershell
-cd web_app
-.\run.ps1
-```
 
-#### Windows (Command Prompt):
-```cmd
+## Tips```powershell
+
 cd web_app
+
+- Select multiple plans for integrated recommendations.\run.ps1
+
+- Ask specific questions like "What if I retire at 62?"```
+
+- Export plans to share with financial advisors
+
+- AI responses take 10-30 seconds (normal)#### Windows (Command Prompt):
+
+```cmd
+
+⚖️ **Disclaimer**: Educational tool only. Consult qualified financial professionals for investment decisions.cd web_app
 run.bat
 ```
 
@@ -83,7 +123,7 @@ Visit: **http://localhost:5000**
 ## 🎯 Using the Application
 
 ### Landing Page (Step 1: Select Plans)
-- ✅ Check the planning services you need (Retirement, Insurance, Estate, Wealth)
+- ✅ Check the planning services you need (Retirement, Insurance, Estate, Wealth, Education, Tax Planning)
 - 📝 Selected form fields will appear automatically
 
 ### User Information (Step 2: Fill Out Form)
@@ -143,7 +183,7 @@ Then restart the app
 ## 💡 Tips & Tricks
 
 ### Select Multiple Plans
-- You can select 2, 3, or all 4 planning areas at once
+- You can select 2, 3, or all 6 planning areas at once
 - Form adapts to show only relevant fields
 - Executive summary integrates all recommendations
 
@@ -193,6 +233,18 @@ Examples of good follow-up questions:
 - Risk-adjusted recommendations
 - Diversification guidelines
 - Portfolio rebalancing schedule
+
+### Education Planning
+- 529 plan analysis and projections
+- Scholarship opportunity identification
+- Educational loan strategy development
+- Timeline-based funding approaches
+
+### Tax Planning
+- Year-round tax optimization strategies
+- Deduction identification and maximization
+- Tax-efficient investment planning
+- Integration across all planning areas
 
 ---
 
