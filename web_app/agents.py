@@ -297,7 +297,7 @@ required minimum distribution planning, and sustainable withdrawal rate recommen
 
         # Execute tool calls if any
         tool_results = []
-        if response.tool_calls:
+        if hasattr(response, 'tool_calls') and response.tool_calls:
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
@@ -350,7 +350,7 @@ including life, health, disability, and liability insurance."""
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
-        if response.tool_calls:
+        if hasattr(response, 'tool_calls') and response.tool_calls:
             for tool_call in response.tool_calls:
                 result = calculate_life_insurance.invoke(tool_call["args"])
                 tool_results.append(result)
@@ -403,7 +403,7 @@ legacy planning strategies, and seamless wealth transfer mechanisms."""
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
-        if response.tool_calls:
+        if hasattr(response, 'tool_calls') and response.tool_calls:
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 for tool in self.tools:
@@ -464,7 +464,7 @@ Use the asset allocation tool and provide recommendations for:
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
-        if response.tool_calls:
+        if hasattr(response, 'tool_calls') and response.tool_calls:
             for tool_call in response.tool_calls:
                 result = calculate_wealth_allocation.invoke(tool_call["args"])
                 tool_results.append(result)
@@ -520,7 +520,7 @@ scholarship research guidance, and loan optimization approaches."""
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
-        if response.tool_calls:
+        if hasattr(response, 'tool_calls') and response.tool_calls:
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 for tool in self.tools:
@@ -579,7 +579,7 @@ retirement contribution strategies, tax-loss harvesting, and year-round tax plan
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
-        if response.tool_calls:
+        if hasattr(response, 'tool_calls') and response.tool_calls:
             for tool_call in response.tool_calls:
                 result = calculate_tax_optimization.invoke(tool_call["args"])
                 tool_results.append(result)
