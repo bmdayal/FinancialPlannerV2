@@ -52,16 +52,13 @@ class MarketDataMCP:
         Returns:
             Dictionary with price, change, and market data
         """
-        logger.debug(f"get_stock_price called with symbol: {symbol}")
         try:
             if self.provider == 'alpha_vantage':
-                logger.debug(f"Fetching stock price from Alpha Vantage for {symbol}")
                 return self._get_stock_price_av(symbol)
             elif self.provider == 'iex_cloud':
-                logger.debug(f"Fetching stock price from IEX Cloud for {symbol}")
                 return self._get_stock_price_iex(symbol)
         except Exception as e:
-            logger.error(f"Error fetching stock price for {symbol}: {str(e)}", exc_info=True)
+            logger.error(f"Error fetching stock price for {symbol}: {str(e)}")
             return {"error": str(e), "symbol": symbol}
     
     def _get_stock_price_av(self, symbol: str) -> Dict[str, Any]:
@@ -71,9 +68,7 @@ class MarketDataMCP:
             'symbol': symbol,
             'apikey': self.api_key
         }
-        logger.debug(f"Making Alpha Vantage API request for {symbol}")
         response = requests.get(self.base_urls['alpha_vantage'], params=params, timeout=10)
-        logger.debug(f"Alpha Vantage response status: {response.status_code}")
         data = response.json()
         
         if 'Global Quote' in data and data['Global Quote']:
@@ -86,9 +81,9 @@ class MarketDataMCP:
                 'volume': int(quote.get('06. volume', 0)),
                 'timestamp': datetime.now().isoformat()
             }
-            logger.info(f"✓ Successfully fetched {symbol}: ${result['price']}")
+            logger.info(f"[TOOL CALL] get_stock_price('{symbol}') -> ${result['price']}")
             return result
-        logger.warning(f"No quote data returned for {symbol} from Alpha Vantage. Response: {data}")
+        logger.warning(f"No quote data for {symbol}")
         return {"error": "Symbol not found or API limit reached", "symbol": symbol}
     
     def _get_stock_price_iex(self, symbol: str) -> Dict[str, Any]:

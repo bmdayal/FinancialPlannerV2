@@ -206,19 +206,18 @@ class MCPClientManager:
         Returns:
             Result from the tool
         """
-        logger.info(f"[TOOL CALL] Calling '{tool_name}' with args: {kwargs}")
+        logger.info(f"[TOOL CALL] {tool_name} {kwargs}")
         
         for category, tools in self.tools_registry.items():
             if tool_name in tools:
                 try:
-                    logger.debug(f"Found tool '{tool_name}' in category '{category}'")
                     result = tools[tool_name](**kwargs)
                     
                     # Check if result contains an error
                     if isinstance(result, dict) and 'error' in result:
-                        logger.warning(f"✗ Tool '{tool_name}' returned error: {result['error']}")
+                        logger.warning(f"Tool '{tool_name}' returned error: {result['error']}")
                     else:
-                        logger.info(f"✓ Tool '{tool_name}' executed successfully")
+                        logger.info(f"[TOOL RESULT] {tool_name} executed successfully")
                     
                     return {
                         'success': True,
@@ -227,21 +226,21 @@ class MCPClientManager:
                         'result': result
                     }
                 except TypeError as e:
-                    logger.error(f"✗ Invalid arguments for tool '{tool_name}': {str(e)}", exc_info=True)
+                    logger.error(f"Invalid arguments for tool '{tool_name}': {str(e)}")
                     return {
                         'success': False,
                         'tool': tool_name,
                         'error': f'Invalid arguments: {str(e)}'
                     }
                 except Exception as e:
-                    logger.error(f"✗ Exception in tool '{tool_name}': {str(e)}", exc_info=True)
+                    logger.error(f"Exception in tool '{tool_name}': {str(e)}")
                     return {
                         'success': False,
                         'tool': tool_name,
                         'error': str(e)
                     }
         
-        logger.error(f"✗ Tool '{tool_name}' not found in registry")
+        logger.error(f"Tool '{tool_name}' not found in registry")
         return {
             'success': False,
             'tool': tool_name,

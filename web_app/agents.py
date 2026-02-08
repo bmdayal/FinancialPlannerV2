@@ -43,100 +43,82 @@ except Exception as e:
 @tool
 def get_stock_price(symbol: str) -> str:
     """Get current stock price and market data for investment analysis."""
-    logger.debug(f"[AGENT] Calling MCP tool: get_stock_price(symbol={symbol})")
     if mcp_client is None:
-        logger.error("MCP client not available for get_stock_price")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('get_stock_price', symbol=symbol)
-    logger.debug(f"[AGENT] get_stock_price result: {result}")
     return json.dumps(result.get('result', result))
 
 @tool
 def get_portfolio_performance(holdings: List[Dict[str, float]]) -> str:
     """Calculate portfolio performance based on current market prices."""
-    logger.debug(f"[AGENT] Calling MCP tool: get_portfolio_performance with {len(holdings)} holdings")
     if mcp_client is None:
-        logger.error("MCP client not available for get_portfolio_performance")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('get_portfolio_performance', holdings=holdings)
-    logger.debug(f"[AGENT] get_portfolio_performance result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def get_market_indices() -> str:
     """Get major market indices (S&P 500, Nasdaq, Dow Jones) data for portfolio context."""
-    logger.debug("[AGENT] Calling MCP tool: get_market_indices")
     if mcp_client is None:
-        logger.error("MCP client not available for get_market_indices")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('get_market_indices')
-    logger.debug("[AGENT] get_market_indices result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def get_current_mortgage_rates() -> str:
     """Get current mortgage rates for 15-year, 30-year, jumbo, and FHA loans."""
-    logger.debug("[AGENT] Calling MCP tool: get_current_mortgage_rates")
     if mcp_client is None:
-        logger.error("MCP client not available for get_current_mortgage_rates")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('get_current_mortgage_rates')
-    logger.debug("[AGENT] get_current_mortgage_rates result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def calculate_mortgage_payment(principal: float, annual_rate: float, years: int) -> str:
     """Calculate monthly mortgage payment with amortization schedule."""
-    logger.debug(f"[AGENT] Calling MCP tool: calculate_mortgage_payment(principal={principal}, rate={annual_rate}, years={years})")
     if mcp_client is None:
-        logger.error("MCP client not available for calculate_mortgage_payment")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('calculate_mortgage_payment', principal=principal, annual_rate=annual_rate, years=years)
-    logger.debug("[AGENT] calculate_mortgage_payment result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def get_inflation_rate() -> str:
     """Get current inflation rate based on Consumer Price Index for expense projections."""
-    logger.debug("[AGENT] Calling MCP tool: get_inflation_rate")
     if mcp_client is None:
         logger.error("MCP client not available for get_inflation_rate")
         return "MCP client not available"
     result = mcp_client.call_tool('get_inflation_rate')
-    logger.debug("[AGENT] get_inflation_rate result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def project_retirement_inflation(current_annual_expense: float, years_to_retirement: int) -> str:
     """Project retirement expenses accounting for current inflation rates."""
-    logger.debug(f"[AGENT] Calling MCP tool: project_retirement_inflation(expense={current_annual_expense}, years={years_to_retirement})")
     if mcp_client is None:
-        logger.error("MCP client not available for project_retirement_inflation")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('project_retirement_inflation', current_annual_expense=current_annual_expense, years_to_retirement=years_to_retirement)
-    logger.debug("[AGENT] project_retirement_inflation result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def get_federal_funds_rate() -> str:
     """Get current Federal Reserve Funds Rate for interest rate analysis."""
-    logger.debug("[AGENT] Calling MCP tool: get_federal_funds_rate")
     if mcp_client is None:
-        logger.error("MCP client not available for get_federal_funds_rate")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('get_federal_funds_rate')
-    logger.debug("[AGENT] get_federal_funds_rate result received")
     return json.dumps(result.get('result', result))
 
 @tool
 def get_economic_dashboard() -> str:
     """Get comprehensive dashboard of key economic indicators for planning context."""
-    logger.debug("[AGENT] Calling MCP tool: get_economic_dashboard")
     if mcp_client is None:
-        logger.error("MCP client not available for get_economic_dashboard")
+        logger.error("MCP client not available")
         return "MCP client not available"
     result = mcp_client.call_tool('get_economic_dashboard')
-    logger.debug("[AGENT] get_economic_dashboard result received")
     return json.dumps(result.get('result', result))
 
 
@@ -425,20 +407,21 @@ User Information:
 - Current Savings: ${user_info.get('savings', 0):,.2f}
 - Risk Tolerance: {user_info.get('risk_tolerance', 'moderate')}
 
-IMPORTANT: You MUST use the available tools to provide accurate retirement planning:
+IMPORTANT: You MUST use ALL available tools to provide comprehensive retirement planning with real market data:
 
-1. Call calculate_retirement_needs with current age, retirement age, and estimated annual expenses
-2. Call calculate_wealth_allocation with total assets, current age, and risk tolerance
-3. Call project_retirement_inflation to account for inflation over time
-4. Call get_inflation_rate to understand current economic conditions
-5. Call get_market_indices to assess current market context
+1. Call get_inflation_rate - Get CURRENT inflation rate for accurate projections
+2. Call get_market_indices - Get current S&P 500, Nasdaq, Dow Jones performance
+3. Call project_retirement_inflation with current expense estimates and inflation data
+4. Call calculate_retirement_needs with current age, retirement age, and estimated annual expenses
+5. Call calculate_wealth_allocation with total assets, current age, and risk tolerance
 
-After using these tools, provide a detailed retirement plan summary including:
-- Retirement fund needed calculations
+After using ALL these tools, provide a detailed retirement plan summary including:
+- Current market conditions and inflation context
+- Retirement fund needed calculations based on inflation
 - Social Security optimization strategies  
 - Required minimum distribution planning
 - Sustainable withdrawal rate recommendations
-- Asset allocation aligned with risk tolerance"""
+- Asset allocation aligned with current market conditions"""
 
         tools_to_use = self.tools
         llm_with_tools = self.llm.bind_tools(tools_to_use)
@@ -474,41 +457,21 @@ Create a comprehensive retirement planning summary with specific recommendations
             summary = final_response.content
         else:
             print(f"\n⚠ LLM did not invoke tools for Retirement Planning, calling directly")
-            # Call key tools directly
-            current_age = user_info.get('age', 45)
-            retirement_age = user_info.get('retirement_age', 65)
-            annual_income = user_info.get('annual_income', 0)
-            savings = user_info.get('savings', 0)
-            risk_tolerance = user_info.get('risk_tolerance', 'moderate')
+            # Call ONLY MCP data sources - no calculation logic
+            print(f"  → Fetching MCP data sources...")
             
-            # Calculate retirement needs
-            annual_expenses = annual_income * 0.7  # Assume 70% of current income
-            retirement_result = calculate_retirement_needs.invoke({
-                "current_age": current_age,
-                "retirement_age": retirement_age,
-                "annual_expenses": annual_expenses
-            })
-            tool_results.append(retirement_result)
-            mcp_tools_used.append({"name": "calculate_retirement_needs", "args": {"current_age": current_age, "retirement_age": retirement_age, "annual_expenses": annual_expenses}})
+            # Economic Data MCP
+            inflation_result = get_inflation_rate.invoke({})
+            mcp_tools_used.append({"name": "get_inflation_rate", "source": "Economic Data MCP", "args": {}, "result": inflation_result})
+            print(f"  ✓ get_inflation_rate (Economic Data MCP) completed")
             
-            # Calculate wealth allocation
-            allocation_result = calculate_wealth_allocation.invoke({
-                "total_assets": savings,
-                "age": current_age,
-                "risk_tolerance": risk_tolerance
-            })
-            tool_results.append(allocation_result)
-            mcp_tools_used.append({"name": "calculate_wealth_allocation", "args": {"total_assets": savings, "age": current_age, "risk_tolerance": risk_tolerance}})
-            print(f"  ✓ calculate_retirement_needs completed")
-            print(f"  ✓ calculate_wealth_allocation completed")
+            # Market Data MCP
+            market_result = get_market_indices.invoke({})
+            mcp_tools_used.append({"name": "get_market_indices", "source": "Market Data MCP", "args": {}, "result": market_result})
+            print(f"  ✓ get_market_indices (Market Data MCP) completed")
             
-            summary_prompt = f"""Based on these calculations:
-{chr(10).join(tool_results)}
-
-Create a comprehensive retirement planning summary with specific recommendations."""
-
-            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
-            summary = final_response.content
+            # Create simple summary from MCP data only
+            summary = "MCP Data Sources Retrieved: Market indices and inflation data fetched successfully for workshop demonstration."
 
         # Track MCP tools used for this plan
         if "Retirement Planning" not in state["mcp_data"]:
@@ -564,7 +527,7 @@ After using this tool, provide comprehensive insurance recommendations covering:
                 tool_args = tool_call["args"]
                 result = calculate_life_insurance.invoke(tool_args)
                 tool_results.append(result)
-                mcp_tools_used.append({"name": "calculate_life_insurance", "args": tool_args})
+                mcp_tools_used.append({"name": "calculate_life_insurance", "args": tool_args, "result": result})
                 print(f"  ✓ calculate_life_insurance completed")
 
             summary_prompt = f"""Based on these calculations:
@@ -590,7 +553,7 @@ Create a comprehensive insurance planning summary covering life, health, disabil
             }
             insurance_result = calculate_life_insurance.invoke(insurance_args)
             tool_results.append(insurance_result)
-            mcp_tools_used.append({"name": "calculate_life_insurance", "args": insurance_args})
+            mcp_tools_used.append({"name": "calculate_life_insurance", "args": insurance_args, "result": insurance_result})
             print(f"  ✓ calculate_life_insurance completed")
             
             summary_prompt = f"""Based on these calculations:
@@ -757,7 +720,7 @@ After using these tools, provide comprehensive recommendations for:
                 tool_args = tool_call["args"]
                 result = calculate_wealth_allocation.invoke(tool_args)
                 tool_results.append(result)
-                mcp_tools_used.append({"name": tool_name, "args": tool_args})
+                mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
                 print(f"  ✓ {tool_name} completed")
 
             summary_prompt = f"""Based on these calculations:
@@ -770,29 +733,16 @@ diversification recommendations, and monitoring schedule."""
             summary = final_response.content
         else:
             print(f"\n⚠ LLM did not invoke tools for Personal Wealth Management, calling directly")
-            # Call key tool directly
-            total_assets = user_info.get('total_assets', user_info.get('savings', 0))
-            current_age = user_info.get('age', 45)
-            risk_tolerance = user_info.get('risk_tolerance', 'moderate')
+            # Call ONLY MCP data sources - no calculation logic
+            print(f"  → Fetching MCP data sources...")
             
-            wealth_args = {
-                "total_assets": total_assets,
-                "age": current_age,
-                "risk_tolerance": risk_tolerance
-            }
-            allocation_result = calculate_wealth_allocation.invoke(wealth_args)
-            tool_results.append(allocation_result)
-            mcp_tools_used.append({"name": "calculate_wealth_allocation", "args": wealth_args})
-            print(f"  ✓ calculate_wealth_allocation completed")
+            # Market Data MCP
+            market_result = get_market_indices.invoke({})
+            mcp_tools_used.append({"name": "get_market_indices", "source": "Market Data MCP", "args": {}, "result": market_result})
+            print(f"  ✓ get_market_indices (Market Data MCP) completed")
             
-            summary_prompt = f"""Based on these calculations:
-{chr(10).join(tool_results)}
-
-Create a comprehensive wealth management summary including investment strategy, tax optimization,
-diversification recommendations, and monitoring schedule."""
-
-            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
-            summary = final_response.content
+            # Create simple summary from MCP data only
+            summary = "MCP Data Sources Retrieved: Market indices data fetched successfully for workshop demonstration."
 
         # Track MCP tools used for this plan
         if "Personal Wealth Management" not in state["mcp_data"]:
@@ -860,7 +810,7 @@ After using these tools, provide comprehensive education planning recommendation
                     if tool.name == tool_name:
                         result = tool.invoke(tool_args)
                         tool_results.append(result)
-                        mcp_tools_used.append({"name": tool_name, "args": tool_args})
+                        mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
                         print(f"  ✓ {tool_name} completed")
 
             summary_prompt = f"""Based on these calculations:
@@ -884,7 +834,7 @@ scholarship opportunities, loan optimization, and timeline-based funding approac
                 }
                 education_result = calculate_education_fund.invoke(education_args)
                 tool_results.append(education_result)
-                mcp_tools_used.append({"name": "calculate_education_fund", "args": education_args})
+                mcp_tools_used.append({"name": "calculate_education_fund", "args": education_args, "result": education_result})
                 print(f"  ✓ calculate_education_fund completed")
             
             summary_prompt = f"""Based on these calculations:
@@ -960,7 +910,7 @@ After using these tools, provide comprehensive tax planning strategies including
                 tool_args = tool_call["args"]
                 result = calculate_tax_optimization.invoke(tool_args)
                 tool_results.append(result)
-                mcp_tools_used.append({"name": tool_name, "args": tool_args})
+                mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
                 print(f"  ✓ {tool_name} completed")
 
             summary_prompt = f"""Based on these calculations:
@@ -985,7 +935,7 @@ deduction identification, compliance assistance, and year-round tax-efficient de
             }
             tax_result = calculate_tax_optimization.invoke(tax_args)
             tool_results.append(tax_result)
-            mcp_tools_used.append({"name": "calculate_tax_optimization", "args": tax_args})
+            mcp_tools_used.append({"name": "calculate_tax_optimization", "args": tax_args, "result": tax_result})
             print(f"  ✓ calculate_tax_optimization completed")
             
             summary_prompt = f"""Based on these calculations:

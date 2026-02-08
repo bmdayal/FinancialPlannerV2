@@ -46,7 +46,6 @@ class MortgageRatesMCP:
         Returns:
             Dictionary with 15-year and 30-year mortgage rates
         """
-        logger.info("Getting current mortgage rates from FRED API")
         try:
             rates = {
                 '15_year': self._get_fred_rate('MORTGAGE15US'),
@@ -58,14 +57,14 @@ class MortgageRatesMCP:
             # Filter out None values
             rates = {k: v for k, v in rates.items() if v is not None}
             
-            logger.info(f"✓ Mortgage rates fetched: {rates}")
+            logger.info(f"[TOOL CALL] get_current_mortgage_rates() -> {rates}")
             return {
                 'rates': rates,
                 'timestamp': datetime.now().isoformat(),
                 'source': 'Federal Reserve (FRED)'
             }
         except Exception as e:
-            logger.error(f"Error fetching mortgage rates: {str(e)}", exc_info=True)
+            logger.error(f"Error fetching mortgage rates: {str(e)}")
             return {"error": str(e)}
     
     def _get_fred_rate(self, series_id: str) -> Optional[float]:
@@ -85,20 +84,16 @@ class MortgageRatesMCP:
                 'sort_order': 'desc',
                 'limit': 1
             }
-            logger.debug(f"Fetching FRED series: {series_id}")
             response = requests.get(
                 f'{self.fred_base_url}/series/observations',
                 params=params,
                 timeout=10
             )
-            logger.debug(f"FRED API response status: {response.status_code}")
             data = response.json()
             
             if data.get('observations') and len(data['observations']) > 0:
                 rate_value = float(data['observations'][0]['value'])
-                logger.debug(f"✓ {series_id} = {rate_value}%")
                 return rate_value
-            logger.warning(f"No observations returned for {series_id}")
             return None
         except Exception as e:
             logger.warning(f"Could not fetch {series_id}: {str(e)}")

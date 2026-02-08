@@ -53,15 +53,14 @@ class EconomicDataMCP:
                 'series_id': series_id,
                 'api_key': self.fred_api_key,
                 'sort_order': 'desc',
-                'limit': limit
+                'limit': limit,
+                'output_type': 'json' 
             }
-            logger.debug(f"Fetching FRED data for series: {series_id}")
             response = requests.get(
                 f'{self.fred_base_url}/series/observations',
                 params=params,
                 timeout=10
             )
-            logger.debug(f"FRED API response status: {response.status_code}")
             data = response.json()
             return data.get('observations', [])
         except Exception as e:
@@ -75,7 +74,6 @@ class EconomicDataMCP:
         Returns:
             Dictionary with current inflation data
         """
-        logger.info("Fetching inflation rate from FRED API")
         try:
             # CPIAUCSL = Consumer Price Index for All Urban Consumers
             observations = self._get_fred_data('CPIAUCSL', limit=13)
@@ -96,13 +94,12 @@ class EconomicDataMCP:
                     'source': 'Federal Reserve (FRED)',
                     'description': 'Consumer Price Index year-over-year change'
                 }
-                logger.info(f"✓ Inflation rate: {yoy_inflation:.2f}%")
+                logger.info(f"[TOOL CALL] get_inflation_rate() -> {yoy_inflation:.2f}%")
                 return result
             
-            logger.warning("Insufficient inflation data from FRED")
             return {"error": "Insufficient data"}
         except Exception as e:
-            logger.error(f"Error fetching inflation rate: {str(e)}", exc_info=True)
+            logger.error(f"Error fetching inflation rate: {str(e)}")
             return {"error": str(e)}
     
     def get_unemployment_rate(self) -> Dict[str, Any]:
