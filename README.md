@@ -12,9 +12,10 @@ A comprehensive financial planning application powered by **Agentic AI** using *
 1. **Get OpenAI API Key**: Visit https://platform.openai.com/api-keys
 2. **Navigate to app**: `cd web_app`
 3. **Set API key**: Create `.env` file with `OPENAI_API_KEY=your-key-here`
-4. **Install**: `pip install -r requirements.txt`
-5. **Run**: `python app.py`
-6. **Open**: http://localhost:5000
+4. **Configure External APIs (Optional)**: Set up MCP servers for real-time market and economic data (see section below)
+5. **Install**: `pip install -r requirements.txt`
+6. **Run**: `python app.py`
+7. **Open**: http://localhost:5000
 
 ## 🌟 Key Features
 
@@ -44,6 +45,13 @@ A comprehensive financial planning application powered by **Agentic AI** using *
 - **Loading Animations** - Visual feedback during AI processing
 - **Progress Indicators** - Step-by-step planning guidance
 - **Interactive Visualizations** - Charts and graphs for financial projections
+
+### 🌐 **External API Integration (MCP Servers)**
+- **Real-Time Market Data** - Live stock prices and portfolio performance tracking
+- **Current Interest Rates** - Mortgage rates, Federal Funds Rate, Prime Rate
+- **Economic Indicators** - Inflation rates, unemployment, GDP data
+- **Accurate Projections** - Retirement expenses adjusted for actual inflation
+- **Market Context** - Make decisions based on current market conditions
 
 ## 🚀 Detailed Installation
 
@@ -87,6 +95,111 @@ A comprehensive financial planning application powered by **Agentic AI** using *
    OPENAI_API_KEY=your_openai_api_key_here
    ```
 
+### Optional: Configure MCP Servers for Real-Time Market & Economic Data
+
+The application includes integrated MCP (Model Context Protocol) servers that connect to external APIs for real-time financial data. This enables more accurate financial planning with current market conditions and economic indicators.
+
+#### Step 1: Copy Environment Template
+```powershell
+# From the project root directory
+copy .env.example .env
+```
+
+#### Step 2: Configure Market Data API (Choose One)
+
+**Option A: Alpha Vantage (Recommended for beginners)**
+1. Get free API key: https://www.alphavantage.co/
+2. Add to `.env`:
+   ```env
+   MARKET_DATA_API_KEY=your_alpha_vantage_api_key_here
+   MARKET_DATA_PROVIDER=alpha_vantage
+   ```
+3. Free tier includes: Stock prices, market indices, portfolio analysis
+4. Limitations: 5 API calls per minute, 500 requests per day
+
+**Option B: IEX Cloud (More robust)**
+1. Get free account: https://iexcloud.io/
+2. Add to `.env`:
+   ```env
+   MARKET_DATA_API_KEY=your_iex_cloud_token_here
+   MARKET_DATA_PROVIDER=iex_cloud
+   ```
+3. Free tier includes: Real-time prices, intraday data
+4. Limitations: 100 messages per second, 10 million messages per month
+
+#### Step 3: Configure Economic Data API (Required for inflation/rate data)
+
+Get free API key from Federal Reserve Economic Data (FRED):
+1. Visit: https://fred.stlouisfed.org/docs/api/
+2. Register for free account
+3. Add to `.env`:
+   ```env
+   FRED_API_KEY=your_fred_api_key_here
+   ```
+
+This provides:
+- **Inflation Rate**: Consumer Price Index (CPI) data
+- **Interest Rates**: Federal Funds Rate, Mortgage Rates (15yr, 30yr, Jumbo, FHA)
+- **Unemployment**: Current unemployment statistics
+- **GDP Growth**: Economic growth data
+- **Economic Dashboard**: Comprehensive economic indicators
+
+#### Step 4: (Optional) Mortgage Rates API
+
+For specialized mortgage rate data beyond FRED:
+```env
+MORTGAGE_API_KEY=your_mortgage_api_key_here
+```
+
+#### Step 5: Configure MCP Settings
+
+Fine-tune MCP behavior in `.env`:
+```env
+ENABLE_MCP_SERVERS=true              # Enable/disable MCP functionality
+MCP_CACHE_ENABLED=true               # Cache API responses
+MCP_CACHE_TIMEOUT=300                # Cache duration (seconds)
+```
+
+#### What MCPs Enable
+
+With MCPs configured, the financial planning agents gain access to:
+
+**Market Data Tools**
+- `get_stock_price()` - Real-time stock prices and market data
+- `get_portfolio_performance()` - Current portfolio value and gains/losses
+- `get_market_indices()` - S&P 500, Nasdaq, Dow Jones data
+- `search_stocks()` - Find stocks by keywords
+
+**Interest Rate Tools**
+- `get_current_mortgage_rates()` - Current mortgage rates by type
+- `calculate_mortgage_payment()` - Accurate payment calculations
+- `get_federal_funds_rate()` - Current Fed rate
+- `project_rate_scenarios()` - Future rate projections
+
+**Economic Data Tools**
+- `get_inflation_rate()` - Current inflation metrics
+- `get_unemployment_rate()` - Employment statistics
+- `get_economic_dashboard()` - Comprehensive economic overview
+- `project_retirement_inflation()` - Adjust projections for inflation
+- `compare_inflation_scenarios()` - Low/moderate/high inflation analysis
+
+#### Troubleshooting MCP Setup
+
+**"MCP client not available" message**
+- Ensure `anthropic>=0.29.0` is installed: `pip install -r requirements.txt`
+- Check that all API keys in `.env` are filled in correctly
+- Verify internet connection for API calls
+
+**API Rate Limits**
+- Alpha Vantage: Wait between requests, spread out multiple queries
+- FRED: Very generous limits, rarely hit (120 requests per minute)
+- Use caching to reduce API calls: `MCP_CACHE_ENABLED=true`
+
+**Missing Rates/Data**
+- Some indicators only update monthly (e.g., unemployment, inflation)
+- Check FRED website for latest available data: https://fred.stlouisfed.org/
+- Application will gracefully fall back to default values if APIs unavailable
+
 5. **Run the Application**
    ```powershell
    python app.py
@@ -95,6 +208,7 @@ A comprehensive financial planning application powered by **Agentic AI** using *
 6. **Access the Application**
    
    Open your browser and navigate to: `http://localhost:5000`
+
 
 ## 📖 Usage Guide
 
@@ -137,20 +251,34 @@ User Input → LangChain Router → Specialized Agents → Response Synthesis
 Context Management → Prompt Engineering → OpenAI GPT-4 → Formatted Output
 ```
 
+### MCP Integration Architecture
+```
+Financial Agents → MCP Client Manager → External APIs
+                        ↓
+        ┌───────────┬────────────┬──────────────┐
+        ↓           ↓            ↓              ↓
+    Market Data  Interest Rates  Inflation   Economic
+    (Alpha V)    (FRED API)      (FRED)      Data
+```
+
 ### System Components
 - **Flask Web Server**: Handles HTTP requests and responses
 - **LangChain Framework**: Manages AI agent orchestration
 - **OpenAI Integration**: Powers natural language processing
 - **Session Management**: Maintains conversation state
 - **Export Engine**: Generates professional documents
+- **MCP Servers**: Provide real-time market and economic data
+  - Market Data MCP: Stock prices, indices, portfolio analysis
+  - Mortgage Rates MCP: Interest rates, loan calculations
+  - Economic Data MCP: Inflation, unemployment, GDP metrics
 
 ## 📁 Project Structure
 
 ```
-FinancialPlannerDemo/
-├── web_app/                    # Main application
-│   ├── app.py                  # Flask application
-│   ├── agents.py               # AI agent definitions
+FinancialPlannerV2/
+├── web_app/                    # Main Flask application
+│   ├── app.py                  # Flask application entry point
+│   ├── agents.py               # AI agent definitions & tools
 │   ├── config.py              # Configuration settings
 │   ├── requirements.txt        # Python dependencies
 │   ├── static/                # CSS, JS, assets
@@ -158,7 +286,15 @@ FinancialPlannerDemo/
 │   │   └── js/                # JavaScript files
 │   ├── templates/             # HTML templates
 │   └── flask_session/         # Session data
-├── flask_session/             # Session storage
+├── mcp_servers/                # MCP Server implementations
+│   ├── market_data_mcp.py      # Stock prices & market data
+│   ├── mortgage_rates_mcp.py   # Interest rates & mortgage calculations
+│   ├── economic_data_mcp.py    # Inflation, unemployment, GDP data
+│   ├── mcp_client.py           # Unified MCP client manager
+│   ├── __init__.py             # Package initialization
+│   └── mcp_utils.py            # Helper utilities (optional)
+├── .env.example                # Environment template with MCP setup
+├── .gitignore
 └── README.md                  # This file
 ```
 
@@ -172,6 +308,12 @@ FinancialPlannerDemo/
 - **ReportLab** - PDF generation
 - **python-docx** - Word document creation
 
+### MCP Servers & External APIs
+- **Anthropic MCP SDK** - Model Context Protocol implementation
+- **Alpha Vantage API** - Real-time stock prices and market data
+- **Federal Reserve FRED API** - Economic indicators, interest rates, inflation
+- **IEX Cloud** - Alternative market data provider
+
 ### Frontend
 - **HTML5** - Structure and semantics
 - **CSS3** - Styling and animations
@@ -181,6 +323,8 @@ FinancialPlannerDemo/
 ### Infrastructure
 - **Flask-Session** - Session management
 - **NumPy** - Numerical computations
+- **Pandas** - Data manipulation
+- **Requests** - HTTP client for API calls
 - **JSON** - Data exchange format
 
 ## 📚 Documentation
