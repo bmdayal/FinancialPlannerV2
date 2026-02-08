@@ -55,8 +55,6 @@ class MCPClientManager:
             'market': {
                 'get_stock_price': self.market_data.get_stock_price,
                 'get_portfolio_performance': self.market_data.get_portfolio_performance,
-                'get_market_indices': self.market_data.get_market_indices,
-                'search_stocks': self.market_data.search_stocks,
             },
             'mortgage': {
                 'get_current_mortgage_rates': self.mortgage_rates.get_current_mortgage_rates,
@@ -98,18 +96,6 @@ class MCPClientManager:
                 'description': 'Calculate portfolio performance based on current market prices',
                 'category': 'market',
                 'function': self.market_data.get_portfolio_performance
-            },
-            {
-                'name': 'get_market_indices',
-                'description': 'Get major market indices (S&P 500, Nasdaq, Dow Jones) data',
-                'category': 'market',
-                'function': self.market_data.get_market_indices
-            },
-            {
-                'name': 'search_stocks',
-                'description': 'Search for stocks by company name, symbol, or sector',
-                'category': 'market',
-                'function': self.market_data.search_stocks
             },
         ])
         

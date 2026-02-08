@@ -33,7 +33,8 @@ class MarketDataMCP:
         self.provider = provider
         self.base_urls = {
             'alpha_vantage': 'https://www.alphavantage.co/query',
-            'iex_cloud': 'https://cloud.iexapis.com/stable'
+            'iex_cloud': 'https://cloud.iexapis.com/stable',
+            'yfinance': None
         }
         self.cache = {}
         self.cache_timeout = 300  # 5 minutes
@@ -45,20 +46,40 @@ class MarketDataMCP:
     def get_stock_price(self, symbol: str) -> Dict[str, Any]:
         """
         Get current stock price and market data
-        
-        Args:
-            symbol: Stock ticker symbol (e.g., 'AAPL', 'MSFT')
-            
-        Returns:
-            Dictionary with price, change, and market data
         """
         try:
             if self.provider == 'alpha_vantage':
                 return self._get_stock_price_av(symbol)
             elif self.provider == 'iex_cloud':
                 return self._get_stock_price_iex(symbol)
+            elif self.provider == 'yfinance':
+                return self._get_stock_price_yfinance(symbol)
         except Exception as e:
             logger.error(f"Error fetching stock price for {symbol}: {str(e)}")
+            return {"error": str(e), "symbol": symbol}
+    
+    def _get_stock_price_yfinance(self, symbol: str) -> Dict[str, Any]:
+        """Get stock price from yfinance"""
+        import yfinance as yf
+        try:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="1d")
+            if hist is not None and not hist.empty:
+                price = hist["Close"].iloc[-1]
+                volume = hist["Volume"].iloc[-1]
+                result = {
+                    'symbol': symbol,
+                    'price': float(price),
+                    'volume': int(volume),
+                    'timestamp': str(hist.index[-1]),
+                    'provider': 'yfinance'
+                }
+                logger.info(f"[TOOL CALL] get_stock_price('{symbol}') -> ${result['price']} (yfinance)")
+                return result
+            logger.warning(f"No quote data for {symbol} (yfinance)")
+            return {"error": "Symbol not found or no data", "symbol": symbol}
+        except Exception as e:
+            logger.error(f"Error fetching yfinance price for {symbol}: {str(e)}")
             return {"error": str(e), "symbol": symbol}
     
     def _get_stock_price_av(self, symbol: str) -> Dict[str, Any]:
@@ -159,65 +180,7 @@ class MarketDataMCP:
             logger.error(f"Error calculating portfolio performance: {str(e)}")
             return {"error": str(e)}
     
-    def get_market_indices(self) -> Dict[str, Any]:
-        """
-        Get major market indices data (S&P 500, Nasdaq, Dow Jones)
-        
-        Returns:
-            Dictionary with major indices data
-        """
-        try:
-            indices = ['SPY', 'QQQ', 'DIA']  # Proxies for S&P 500, Nasdaq, Dow
-            index_names = {'SPY': 'S&P 500', 'QQQ': 'Nasdaq-100', 'DIA': 'Dow Jones'}
-            
-            results = {}
-            for symbol in indices:
-                price_data = self.get_stock_price(symbol)
-                if 'error' not in price_data:
-                    results[index_names.get(symbol, symbol)] = {
-                        'symbol': symbol,
-                        'price': price_data.get('price'),
-                        'change': price_data.get('change'),
-                        'change_percent': price_data.get('change_percent')
-                    }
-            
-            return {
-                'indices': results,
-                'timestamp': datetime.now().isoformat()
-            }
-        except Exception as e:
-            logger.error(f"Error fetching market indices: {str(e)}")
-            return {"error": str(e)}
-    
-    def search_stocks(self, keywords: str) -> Dict[str, Any]:
-        """
-        Search for stocks by keywords or sector
-        
-        Args:
-            keywords: Search terms (company name, sector, etc.)
-            
-        Returns:
-            List of matching stocks
-        """
-        try:
-            if self.provider == 'alpha_vantage':
-                params = {
-                    'function': 'SYMBOL_SEARCH',
-                    'keywords': keywords,
-                    'apikey': self.api_key
-                }
-                response = requests.get(self.base_urls['alpha_vantage'], params=params, timeout=10)
-                data = response.json()
-                
-                return {
-                    'results': data.get('bestMatches', []),
-                    'count': len(data.get('bestMatches', []))
-                }
-            else:
-                return {"error": "Search not available with current provider"}
-        except Exception as e:
-            logger.error(f"Error searching stocks: {str(e)}")
-            return {"error": str(e)}
+    # Removed get_market_indices and search_stocks (only yfinance-based tools remain)
 
 
 # For running as a standalone service

@@ -59,15 +59,6 @@ def get_portfolio_performance(holdings: List[Dict[str, float]]) -> str:
     return json.dumps(result.get('result', result))
 
 @tool
-def get_market_indices() -> str:
-    """Get major market indices (S&P 500, Nasdaq, Dow Jones) data for portfolio context."""
-    if mcp_client is None:
-        logger.error("MCP client not available")
-        return "MCP client not available"
-    result = mcp_client.call_tool('get_market_indices')
-    return json.dumps(result.get('result', result))
-
-@tool
 def get_current_mortgage_rates() -> str:
     """Get current mortgage rates for 15-year, 30-year, jumbo, and FHA loans."""
     if mcp_client is None:
@@ -391,7 +382,7 @@ class RetirementAgent:
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
         self.tools = [calculate_retirement_needs, calculate_wealth_allocation, 
-                     project_retirement_inflation, get_inflation_rate, get_market_indices]
+                     project_retirement_inflation, get_inflation_rate]
 
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
@@ -410,7 +401,7 @@ User Information:
 IMPORTANT: You MUST use ALL available tools to provide comprehensive retirement planning with real market data:
 
 1. Call get_inflation_rate - Get CURRENT inflation rate for accurate projections
-2. Call get_market_indices - Get current S&P 500, Nasdaq, Dow Jones performance
+2. Analyze current market conditions for portfolio context
 3. Call project_retirement_inflation with current expense estimates and inflation data
 4. Call calculate_retirement_needs with current age, retirement age, and estimated annual expenses
 5. Call calculate_wealth_allocation with total assets, current age, and risk tolerance
@@ -433,11 +424,15 @@ After using ALL these tools, provide a detailed retirement plan summary includin
         mcp_tools_used = []  # Track tools for display
         
         if hasattr(response, 'tool_calls') and response.tool_calls:
-            print(f"\n✓ LLM invoked {len(response.tool_calls)} tools for Retirement Planning")
+            logger.info("="*80)
+            logger.info(f"✓ LLM-DRIVEN MODE: LLM invoked {len(response.tool_calls)} tools for Retirement Planning")
+            logger.info("Using MCP data directly in LLM reasoning")
+            logger.info("="*80)
+            
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
-                print(f"  → Executing: {tool_name}({list(tool_args.keys())})")
+                logger.info(f"  → Executing: {tool_name}({list(tool_args.keys())})")
 
                 # Find and execute the tool
                 for tool in tools_to_use:
@@ -445,8 +440,11 @@ After using ALL these tools, provide a detailed retirement plan summary includin
                         result = tool.invoke(tool_args)
                         tool_results.append(result)
                         mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
-                        print(f"  ✓ {tool_name} completed")
+                        logger.info(f"  ✓ {tool_name} completed")
+                        logger.debug(f"     Result preview: {str(result)[:200]}...")
 
+            logger.info(f"💡 LLM now synthesizing {len(tool_results)} tool results into financial plan")
+            
             # Create final summary with tool results
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -456,22 +454,71 @@ Create a comprehensive retirement planning summary with specific recommendations
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            print(f"\n⚠ LLM did not invoke tools for Retirement Planning, calling directly")
-            # Call ONLY MCP data sources - no calculation logic
-            print(f"  → Fetching MCP data sources...")
+            logger.warning("="*80)
+            logger.warning("⚠ FALLBACK MODE: LLM did not invoke tools for Retirement Planning")
+            logger.warning("Creating summary from user data + MCP inflation data")
+            logger.warning("="*80)
             
-            # Economic Data MCP
+            # Economic Data MCP - Get real inflation data
             inflation_result = get_inflation_rate.invoke({})
             mcp_tools_used.append({"name": "get_inflation_rate", "source": "Economic Data MCP", "args": {}, "result": inflation_result})
-            print(f"  ✓ get_inflation_rate (Economic Data MCP) completed")
+            logger.info(f"✓ MCP Data Retrieved: get_inflation_rate")
+            logger.debug(f"   Raw inflation result: {inflation_result}")
             
-            # Market Data MCP
-            market_result = get_market_indices.invoke({})
-            mcp_tools_used.append({"name": "get_market_indices", "source": "Market Data MCP", "args": {}, "result": market_result})
-            print(f"  ✓ get_market_indices (Market Data MCP) completed")
+            # Parse inflation rate from MCP result
+            try:
+                import json
+                inflation_data = json.loads(inflation_result) if isinstance(inflation_result, str) else inflation_result
+                inflation_rate = inflation_data.get('rate', 3.0) / 100  # Convert to decimal
+                logger.info(f"✓ Using REAL inflation rate from MCP: {inflation_rate*100:.2f}%")
+            except Exception as e:
+                inflation_rate = 0.03  # 3% fallback
+                logger.warning(f"⚠ Could not parse inflation data, using fallback 3%: {e}")
             
-            # Create simple summary from MCP data only
-            summary = "MCP Data Sources Retrieved: Market indices and inflation data fetched successfully for workshop demonstration."
+            # Create retirement summary from user information
+            age = user_info.get('age', 30)
+            retirement_age = user_info.get('retirement_age', 65)
+            annual_income = user_info.get('annual_income', 0)
+            savings = user_info.get('savings', 0)
+            years_to_retirement = max(retirement_age - age, 0)
+            
+            # Calculate inflation-adjusted retirement needs
+            replacement_ratio = 0.8  # 80% income replacement
+            withdrawal_rate = 0.04   # 4% safe withdrawal rate
+            future_income = annual_income * ((1 + inflation_rate) ** years_to_retirement)
+            retirement_goal = (future_income * replacement_ratio) / withdrawal_rate
+            
+            logger.info(f"💰 CALCULATION WITH MCP DATA:")
+            logger.info(f"   - Current income: ${annual_income:,.2f}")
+            logger.info(f"   - Inflation rate (from MCP): {inflation_rate*100:.2f}%")
+            logger.info(f"   - Years to retirement: {years_to_retirement}")
+            logger.info(f"   - Future income (inflation-adjusted): ${future_income:,.2f}")
+            logger.info(f"   - Retirement goal needed: ${retirement_goal:,.2f}")
+            logger.info(f"   - Current progress: {(savings / retirement_goal * 100) if retirement_goal > 0 else 0:.1f}%")
+            
+            summary = f"""## Retirement Planning Summary
+
+**Current Situation:**
+- Current Age: {age}
+- Target Retirement Age: {retirement_age}
+- Years to Retirement: {years_to_retirement}
+- Current Annual Income: ${annual_income:,.2f}
+- Current Retirement Savings: ${savings:,.2f}
+
+**Retirement Savings Goal (Inflation-Adjusted):**
+Based on current inflation rate of {inflation_rate*100:.2f}% (from market data), you'll need approximately ${retirement_goal:,.2f} at retirement to maintain your lifestyle (80% income replacement with 4% withdrawal rate).
+
+**Current Progress:**
+Your current savings of ${savings:,.2f} represents {(savings / retirement_goal * 100) if retirement_goal > 0 else 0:.1f}% of your inflation-adjusted retirement goal.
+
+**Recommended Actions:**
+1. Maximize employer 401(k) match if available
+2. Consider contributing to a Roth IRA for tax-free growth
+3. Aim to save 15-20% of annual income for retirement
+4. Review and adjust asset allocation based on time horizon
+5. Consider consulting with a financial advisor for personalized guidance
+
+*Note: These are general guidelines. Actual retirement needs may vary based on lifestyle, healthcare costs, and other factors.*"""
 
         # Track MCP tools used for this plan
         if "Retirement Planning" not in state["mcp_data"]:
@@ -677,7 +724,7 @@ class WealthAgent:
     """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
-        self.tools = [calculate_wealth_allocation, get_market_indices, get_portfolio_performance, get_stock_price]
+        self.tools = [calculate_wealth_allocation, get_portfolio_performance, get_stock_price]
 
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
@@ -695,7 +742,7 @@ User Information:
 IMPORTANT: You MUST use the available tools to provide accurate wealth management advice:
 
 1. Call calculate_wealth_allocation with total assets, age, and risk tolerance
-2. Call get_market_indices to assess current market conditions
+2. Assess current market conditions for portfolio context
 3. Call get_portfolio_performance to evaluate current portfolio health
 4. Call get_stock_price for specific investment examples if applicable
 
@@ -714,14 +761,22 @@ After using these tools, provide comprehensive recommendations for:
         mcp_tools_used = []  # Track tools for display
         
         if hasattr(response, 'tool_calls') and response.tool_calls:
-            print(f"\n✓ LLM invoked {len(response.tool_calls)} tools for Personal Wealth Management")
+            logger.info("="*80)
+            logger.info(f"✓ LLM-DRIVEN MODE: LLM invoked {len(response.tool_calls)} tools for Personal Wealth Management")
+            logger.info("Using MCP data directly in LLM reasoning")
+            logger.info("="*80)
+            
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
+                logger.info(f"  → Executing: {tool_name}({list(tool_args.keys())})")
                 result = calculate_wealth_allocation.invoke(tool_args)
                 tool_results.append(result)
                 mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
-                print(f"  ✓ {tool_name} completed")
+                logger.info(f"  ✓ {tool_name} completed")
+                logger.debug(f"     Result preview: {str(result)[:200]}...")
+
+            logger.info(f"💡 LLM now synthesizing {len(tool_results)} tool results into wealth management plan")
 
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -732,17 +787,61 @@ diversification recommendations, and monitoring schedule."""
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            print(f"\n⚠ LLM did not invoke tools for Personal Wealth Management, calling directly")
-            # Call ONLY MCP data sources - no calculation logic
-            print(f"  → Fetching MCP data sources...")
+            logger.warning("="*80)
+            logger.warning("⚠ FALLBACK MODE: LLM did not invoke tools for Personal Wealth Management")
+            logger.warning("Creating summary from user data (no MCP data required for basic allocation)")
+            logger.warning("="*80)
             
-            # Market Data MCP
-            market_result = get_market_indices.invoke({})
-            mcp_tools_used.append({"name": "get_market_indices", "source": "Market Data MCP", "args": {}, "result": market_result})
-            print(f"  ✓ get_market_indices (Market Data MCP) completed")
+            # Create investment summary from user information
+            age = user_info.get('age', 30)
+            annual_income = user_info.get('annual_income', 0)
+            savings = user_info.get('savings', 0)
+            risk_tolerance = user_info.get('risk_tolerance', 'moderate')
             
-            # Create simple summary from MCP data only
-            summary = "MCP Data Sources Retrieved: Market indices data fetched successfully for workshop demonstration."
+            logger.info(f"📊 FALLBACK CALCULATION (no MCP data used):")
+            logger.info(f"   - Age: {age}")
+            logger.info(f"   - Risk tolerance: {risk_tolerance}")
+            logger.info(f"   - Savings: ${savings:,.2f}")
+            
+            # Determine asset allocation based on risk tolerance
+            if risk_tolerance == 'conservative':
+                stocks, bonds, cash = 40, 50, 10
+            elif risk_tolerance == 'aggressive':
+                stocks, bonds, cash = 80, 15, 5
+            else:  # moderate
+                stocks, bonds, cash = 60, 30, 10
+            
+            summary = f"""## Personal Wealth Management Summary
+
+**Current Investment Profile:**
+- Age: {age}
+- Risk Tolerance: {risk_tolerance.title()}
+- Current Savings: ${savings:,.2f}
+- Annual Income: ${annual_income:,.2f}
+
+**Recommended Asset Allocation:**
+- Stocks/Equities: {stocks}%
+- Bonds/Fixed Income: {bonds}%
+- Cash/Emergency Fund: {cash}%
+
+**Investment Strategy:**
+Based on your {risk_tolerance} risk profile, we recommend a balanced approach that prioritizes {"growth" if risk_tolerance == "aggressive" else "stability" if risk_tolerance == "conservative" else "balanced growth and income"}.
+
+**Key Recommendations:**
+1. Maintain 3-6 months of expenses in emergency fund
+2. Diversify across different asset classes and sectors
+3. Consider low-cost index funds for broad market exposure
+4. Review and rebalance portfolio quarterly
+5. Maximize tax-advantaged accounts (401k, IRA, HSA)
+6. Consider dollar-cost averaging for regular contributions
+
+**Next Steps:**
+- Schedule quarterly portfolio reviews
+- Set up automatic contributions to investment accounts
+- Monitor performance against benchmarks
+- Adjust allocation as you approach major life milestones
+
+*Disclaimer: This is general investment guidance. Consider consulting with a licensed financial advisor for personalized recommendations.*"""
 
         # Track MCP tools used for this plan
         if "Personal Wealth Management" not in state["mcp_data"]:

@@ -37,37 +37,20 @@ def test_market_data_tools():
     print(f"Success: {result['success']}")
     if result['success']:
         price_data = result['result']
-        print(f"  Symbol: {price_data.get('symbol')}")
-        print(f"  Price: ${price_data.get('price')}")
-        print(f"  Change: {price_data.get('change')} ({price_data.get('change_percent')}%)")
-        print(f"  Volume: {price_data.get('volume'):,}")
+        symbol = price_data.get('symbol')
+        price = price_data.get('price')
+        change = price_data.get('change')
+        change_percent = price_data.get('change_percent')
+        volume = price_data.get('volume')
+        print(f"  Symbol: {symbol if symbol is not None else 'N/A'}")
+        print(f"  Price: ${price if price is not None else 'N/A'}")
+        print(f"  Change: {change if change is not None else 'N/A'} ({change_percent if change_percent is not None else 'N/A'}%)")
+        print(f"  Volume: {volume:,}" if volume is not None else "  Volume: N/A")
     else:
         print(f"  Error: {result.get('error')}")
     print()
     
-    # Test 2: Get Market Indices
-    print("Test 2: Get Market Indices (SPY, QQQ, DIA)")
-    result = mcp.call_tool('get_market_indices')
-    print(f"Success: {result['success']}")
-    if result['success']:
-        indices = result['result'].get('indices', {})
-        for name, data in indices.items():
-            print(f"  {name}: ${data.get('price')} ({data.get('change_percent')}%)")
-    else:
-        print(f"  Error: {result.get('error')}")
-    print()
-    
-    # Test 3: Search Stocks
-    print("Test 3: Search Stocks (keyword: 'Apple')")
-    result = mcp.call_tool('search_stocks', keywords='Apple')
-    print(f"Success: {result['success']}")
-    if result['success']:
-        matches = result['result'].get('results', [])[:3]
-        for match in matches:
-            print(f"  - {match.get('1. symbol')}: {match.get('2. name')}")
-    else:
-        print(f"  Error: {result.get('error')}")
-    print()
+    # Removed tests for get_market_indices and search_stocks (only yfinance-based tests remain)
     
     # Test 4: Portfolio Performance
     print("Test 4: Calculate Portfolio Performance")

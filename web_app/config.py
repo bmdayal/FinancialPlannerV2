@@ -29,7 +29,7 @@ class Config:
     # MCP Server Configuration
     # Market Data API (Alpha Vantage or IEX Cloud)
     MARKET_DATA_API_KEY = os.getenv('MARKET_DATA_API_KEY', '')
-    MARKET_DATA_PROVIDER = os.getenv('MARKET_DATA_PROVIDER', 'alpha_vantage')  # 'alpha_vantage' or 'iex_cloud'
+    MARKET_DATA_PROVIDER = os.getenv('MARKET_DATA_PROVIDER', 'yfinance')  # 'yfinance', 'alpha_vantage', or 'iex_cloud'
     
     # Federal Reserve Economic Data (FRED) API
     FRED_API_KEY = os.getenv('FRED_API_KEY', '')
