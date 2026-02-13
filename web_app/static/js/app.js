@@ -201,6 +201,11 @@ function displayResults(result) {
     // Display visualizations
     displayVisualizations(result.visualizations);
     
+    // Display MCP data sources
+    if (result.mcp_data) {
+        displayDataSources(result.mcp_data);
+    }
+    
     // Display plan tabs
     displayPlanTabs(result.plan_summaries);
     
@@ -276,6 +281,49 @@ function displayVisualizations(visualizations) {
     }
 }
 
+
+// ============================================================================
+// MCP DATA SOURCES DISPLAY
+// ============================================================================
+
+function displayDataSources(mcpData) {
+    const container = document.getElementById('dataSourcesContainer');
+    if (!container) {
+        return;
+    }
+    
+    if (!mcpData || Object.keys(mcpData).length === 0) {
+        container.innerHTML = '<p style="color: #666; font-style: italic;">No MCP tools were called for the selected plans.</p>';
+        return;
+    }
+    
+    let html = '<div class="mcp-tools-grid">';
+    
+    for (const [planName, planData] of Object.entries(mcpData)) {
+        if (planData && planData.tools && Array.isArray(planData.tools) && planData.tools.length > 0) {
+            html += '<div class="mcp-plan-card">';
+            html += '<h3 class="mcp-plan-name">' + planName + '</h3>';
+            html += '<div class="mcp-tools-list">';
+            
+            for (let i = 0; i < planData.tools.length; i++) {
+                const tool = planData.tools[i];
+                const toolName = (tool && tool.name) ? tool.name : 'Tool';
+                
+                html += '<div class="mcp-tool-item">';
+                html += '<span class="mcp-tool-badge">📊</span> ';
+                html += '<span class="mcp-tool-name">' + toolName + '</span>';
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            html += '</div>';
+        }
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
 // ============================================================================
 // PLAN TABS
 // ============================================================================
@@ -290,32 +338,60 @@ function displayPlanTabs(planSummaries) {
     let isFirst = true;
     
     Object.entries(planSummaries).forEach(([planName, summary]) => {
+        // Skip if this is the Executive Summary (handled separately)
+        if (planName === 'Executive Summary') {
+            return;
+        }
+        
+        // Create a safe ID from plan name (replace spaces with hyphens)
+        const safeId = planName.toLowerCase().replace(/\s+/g, '-');
+        
+        // Debug log
+        console.log(`Creating tab for: ${planName}, Content length: ${summary ? summary.length : 0}`);
+        
         // Create tab button
         const btn = document.createElement('button');
         btn.className = `tab-btn ${isFirst ? 'active' : ''}`;
         btn.textContent = planName;
-        btn.onclick = () => switchTab(planName);
+        btn.setAttribute('data-plan-id', safeId);
+        btn.onclick = () => switchTab(safeId);
         tabButtons.appendChild(btn);
         
         // Create tab pane
         const pane = document.createElement('div');
         pane.className = `tab-pane ${isFirst ? 'active' : ''}`;
-        pane.id = `pane-${planName}`;
-        pane.innerHTML = `<div class="plan-header"><h3>${planName}</h3></div><div class="plan-content">${formatFinancialContent(summary)}</div>`;
+        pane.id = `pane-${safeId}`;
+        
+        // Format the content
+        const formattedContent = formatFinancialContent(summary);
+        console.log(`Formatted content length for ${planName}: ${formattedContent.length}`);
+        
+        pane.innerHTML = `
+            <div class="plan-header"><h3>${planName}</h3></div>
+            <div class="plan-content">${formattedContent}</div>
+        `;
         tabContent.appendChild(pane);
         
         isFirst = false;
     });
 }
 
-function switchTab(planName) {
+function switchTab(safeId) {
     // Deactivate all tabs
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
     
-    // Activate selected tab
-    event.target.classList.add('active');
-    document.getElementById(`pane-${planName}`).classList.add('active');
+    // Activate selected tab button
+    const selectedBtn = document.querySelector(`[data-plan-id="${safeId}"]`);
+    if (selectedBtn) {
+        selectedBtn.classList.add('active');
+    }
+    
+    // Activate selected tab pane
+    const selectedPane = document.getElementById(`pane-${safeId}`);
+    if (selectedPane) {
+        selectedPane.classList.add('active');
+    }
 }
 
 // ============================================================================

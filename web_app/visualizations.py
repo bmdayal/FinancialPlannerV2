@@ -15,6 +15,16 @@ def create_retirement_projection_chart(user_info: Dict[str, Any]) -> str:
     retirement_age = user_info.get('retirement_age', 65)
     current_savings = user_info.get('savings', 0)
     annual_income = user_info.get('annual_income', 0)
+    
+    # Default values if missing or zero
+    if current_age <= 0:
+        current_age = 30
+    if retirement_age <= current_age:
+        retirement_age = current_age + 20
+    if current_savings < 0:
+        current_savings = 0
+    if annual_income <= 0:
+        annual_income = 50000  # Default income for projections
 
     # Project savings with different contribution rates
     ages = list(range(current_age, 86))
@@ -33,7 +43,7 @@ def create_retirement_projection_chart(user_info: Dict[str, Any]) -> str:
         growth_rate = 0.07  # 7% annual return
 
         # No contributions
-        no_contrib.append(current_savings * ((1 + growth_rate) ** years_elapsed))
+        no_contrib.append(max(0, current_savings * ((1 + growth_rate) ** years_elapsed)))
 
         # With contributions (future value of annuity formula)
         if age < retirement_age:
@@ -41,13 +51,13 @@ def create_retirement_projection_chart(user_info: Dict[str, Any]) -> str:
             moderate_contrib = annual_income * 0.10
             aggressive_contrib = annual_income * 0.15
 
-            fv_contrib_c = conservative_contrib * (((1 + growth_rate) ** years_elapsed - 1) / growth_rate)
-            fv_contrib_m = moderate_contrib * (((1 + growth_rate) ** years_elapsed - 1) / growth_rate)
-            fv_contrib_a = aggressive_contrib * (((1 + growth_rate) ** years_elapsed - 1) / growth_rate)
+            fv_contrib_c = conservative_contrib * (((1 + growth_rate) ** years_elapsed - 1) / growth_rate) if growth_rate != 0 else 0
+            fv_contrib_m = moderate_contrib * (((1 + growth_rate) ** years_elapsed - 1) / growth_rate) if growth_rate != 0 else 0
+            fv_contrib_a = aggressive_contrib * (((1 + growth_rate) ** years_elapsed - 1) / growth_rate) if growth_rate != 0 else 0
 
-            conservative.append(current_savings * ((1 + growth_rate) ** years_elapsed) + fv_contrib_c)
-            moderate.append(current_savings * ((1 + growth_rate) ** years_elapsed) + fv_contrib_m)
-            aggressive.append(current_savings * ((1 + growth_rate) ** years_elapsed) + fv_contrib_a)
+            conservative.append(max(0, current_savings * ((1 + growth_rate) ** years_elapsed) + fv_contrib_c))
+            moderate.append(max(0, current_savings * ((1 + growth_rate) ** years_elapsed) + fv_contrib_m))
+            aggressive.append(max(0, current_savings * ((1 + growth_rate) ** years_elapsed) + fv_contrib_a))
         else:
             # After retirement, start drawing down
             withdrawal_rate = 0.04
@@ -91,6 +101,10 @@ def create_asset_allocation_pie(user_info: Dict[str, Any]) -> str:
     age = user_info.get('age', 30)
     risk_tolerance = user_info.get('risk_tolerance', 'moderate')
     total_assets = user_info.get('total_assets', user_info.get('savings', 0))
+    
+    # Default to 100,000 if no assets provided
+    if total_assets <= 0:
+        total_assets = 100000
 
     # Calculate allocation
     base_stock_pct = 100 - age
@@ -254,6 +268,18 @@ def create_net_worth_projection(user_info: Dict[str, Any]) -> str:
     current_savings = user_info.get('savings', 0)
     debts = user_info.get('debts', 0)
     retirement_age = user_info.get('retirement_age', 65)
+    
+    # Default values if missing or zero
+    if current_age <= 0:
+        current_age = 30
+    if retirement_age <= current_age:
+        retirement_age = current_age + 20
+    if annual_income <= 0:
+        annual_income = 50000  # Default income for projections
+    if current_savings < 0:
+        current_savings = 0
+    if debts < 0:
+        debts = 0
 
     ages = list(range(current_age, retirement_age + 30))
 
@@ -276,12 +302,14 @@ def create_net_worth_projection(user_info: Dict[str, Any]) -> str:
             current_debt = max(0, current_debt - debt_payment)
         else:
             # Retirement phase
-            current_asset = current_asset * (1 + growth_rate) - (annual_income * 0.8 * 0.04)
+            withdrawal = annual_income * 0.8 * 0.04 if annual_income > 0 else 0
+            current_asset = max(0, current_asset * (1 + growth_rate) - withdrawal)
             current_debt = 0
 
-        assets.append(current_asset)
-        liabilities.append(current_debt)
-        net_worth.append(current_asset - current_debt)
+        # Ensure values are valid numbers, not NaN or inf
+        assets.append(max(0, float(current_asset)))
+        liabilities.append(max(0, float(current_debt)))
+        net_worth.append(max(0, float(current_asset - current_debt)))
 
     fig = make_subplots(specs=[[{"secondary_y": False}]])
 
@@ -321,6 +349,9 @@ def create_net_worth_projection(user_info: Dict[str, Any]) -> str:
 def create_monthly_budget_breakdown(user_info: Dict[str, Any]) -> str:
     """Create monthly budget breakdown - returns JSON for Plotly"""
     annual_income = user_info.get('annual_income', 0)
+    # Prevent division by zero
+    if annual_income <= 0:
+        annual_income = 50000  # Default annual income
     monthly_income = annual_income / 12
 
     # 50/30/20 rule with adjustments

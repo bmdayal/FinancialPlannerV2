@@ -25,6 +25,22 @@ class Config:
     # Session
     SESSION_TYPE = 'filesystem'
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
+    
+    # MCP Server Configuration
+    # Market Data API (Alpha Vantage or IEX Cloud)
+    MARKET_DATA_API_KEY = os.getenv('MARKET_DATA_API_KEY', '')
+    MARKET_DATA_PROVIDER = os.getenv('MARKET_DATA_PROVIDER', 'yfinance')  # 'yfinance', 'alpha_vantage', or 'iex_cloud'
+    
+    # Federal Reserve Economic Data (FRED) API
+    FRED_API_KEY = os.getenv('FRED_API_KEY', '')
+    
+    # Mortgage Rates API (optional, if using external service)
+    MORTGAGE_API_KEY = os.getenv('MORTGAGE_API_KEY', '')
+    
+    # MCP Settings
+    ENABLE_MCP_SERVERS = os.getenv('ENABLE_MCP_SERVERS', 'true').lower() == 'true'
+    MCP_CACHE_ENABLED = os.getenv('MCP_CACHE_ENABLED', 'true').lower() == 'true'
+    MCP_CACHE_TIMEOUT = int(os.getenv('MCP_CACHE_TIMEOUT', '300'))  # 5 minutes default
 
 class DevelopmentConfig(Config):
     """Development configuration"""
@@ -41,6 +57,8 @@ class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     OPENAI_API_KEY = 'test-key'
+    MARKET_DATA_API_KEY = 'test-key'
+    FRED_API_KEY = 'test-key'
 
 # Get config based on environment
 config = {

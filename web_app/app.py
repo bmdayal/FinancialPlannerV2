@@ -138,6 +138,7 @@ def start_planning():
             user_info=user_info,
             selected_plans=selected_plan_names,
             plan_summaries={},
+            mcp_data={},  # Initialize empty dict to track MCP tool calls
             next_agent=""
         )
         
@@ -160,6 +161,7 @@ def start_planning():
             'user_info': user_info,
             'selected_plans': selected_plan_names,
             'plan_summaries': final_state['plan_summaries'],
+            'mcp_data': final_state['mcp_data'],  # Store MCP tool call tracking
             'visualizations': visualizations,
             'conversation_history': [],
             'created_at': datetime.now().isoformat()
@@ -168,6 +170,7 @@ def start_planning():
         return jsonify({
             'session_id': session_id,
             'plan_summaries': final_state['plan_summaries'],
+            'mcp_data': final_state['mcp_data'],  # Include MCP data in response
             'visualizations': visualizations,
             'status': 'success'
         })
@@ -188,6 +191,7 @@ def get_planning_results(session_id):
         'user_info': session_data['user_info'],
         'selected_plans': session_data['selected_plans'],
         'plan_summaries': session_data['plan_summaries'],
+        'mcp_data': session_data.get('mcp_data', {}),  # Include MCP data
         'visualizations': session_data['visualizations']
     })
 

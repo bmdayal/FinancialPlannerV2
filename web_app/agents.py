@@ -3,15 +3,118 @@ Financial Planning Agents Module
 Extracted from PlanSummary-AgenticAI.ipynb
 """
 import json
+import logging
 from typing import TypedDict, Annotated, Sequence, List, Dict, Any
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 import operator
+import sys
+import os
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - [%(name)s] - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+# Add mcp_servers to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'mcp_servers'))
+
+# Import MCP Client
+try:
+    from mcp_client import get_mcp_client
+    mcp_client = get_mcp_client()
+    logger.info("✓ MCP Client successfully initialized in agents module")
+except ImportError as e:
+    logger.warning(f"Failed to import MCP Client: {e}")
+    mcp_client = None
+except Exception as e:
+    logger.error(f"Error initializing MCP Client: {e}", exc_info=True)
+    mcp_client = None
 
 
 # ============================================================================
-# FINANCIAL PLANNING TOOLS
+# MCP-BASED TOOLS (Real-time Market & Economic Data)
+# ============================================================================
+
+@tool
+def get_stock_price(symbol: str) -> str:
+    """Get current stock price and market data for investment analysis."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('get_stock_price', symbol=symbol)
+    return json.dumps(result.get('result', result))
+
+@tool
+def get_portfolio_performance(holdings: List[Dict[str, float]]) -> str:
+    """Calculate portfolio performance based on current market prices."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('get_portfolio_performance', holdings=holdings)
+    return json.dumps(result.get('result', result))
+
+@tool
+def get_current_mortgage_rates() -> str:
+    """Get current mortgage rates for 15-year, 30-year, jumbo, and FHA loans."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('get_current_mortgage_rates')
+    return json.dumps(result.get('result', result))
+
+@tool
+def calculate_mortgage_payment(principal: float, annual_rate: float, years: int) -> str:
+    """Calculate monthly mortgage payment with amortization schedule."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('calculate_mortgage_payment', principal=principal, annual_rate=annual_rate, years=years)
+    return json.dumps(result.get('result', result))
+
+@tool
+def get_inflation_rate() -> str:
+    """Get current inflation rate based on Consumer Price Index for expense projections."""
+    if mcp_client is None:
+        logger.error("MCP client not available for get_inflation_rate")
+        return "MCP client not available"
+    result = mcp_client.call_tool('get_inflation_rate')
+    return json.dumps(result.get('result', result))
+
+@tool
+def project_retirement_inflation(current_annual_expense: float, years_to_retirement: int) -> str:
+    """Project retirement expenses accounting for current inflation rates."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('project_retirement_inflation', current_annual_expense=current_annual_expense, years_to_retirement=years_to_retirement)
+    return json.dumps(result.get('result', result))
+
+@tool
+def get_federal_funds_rate() -> str:
+    """Get current Federal Reserve Funds Rate for interest rate analysis."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('get_federal_funds_rate')
+    return json.dumps(result.get('result', result))
+
+@tool
+def get_economic_dashboard() -> str:
+    """Get comprehensive dashboard of key economic indicators for planning context."""
+    if mcp_client is None:
+        logger.error("MCP client not available")
+        return "MCP client not available"
+    result = mcp_client.call_tool('get_economic_dashboard')
+    return json.dumps(result.get('result', result))
+
+
+# ============================================================================
+# TRADITIONAL FINANCIAL PLANNING TOOLS
 # ============================================================================
 
 @tool
@@ -26,12 +129,15 @@ def calculate_retirement_needs(current_age: int, retirement_age: int,
     future_annual_expenses = annual_expenses * ((1 + inflation_rate) ** years_to_retirement)
     total_needed = future_annual_expenses * years_in_retirement
 
+    # Guard against division by zero
+    monthly_savings = 0 if years_to_retirement <= 0 else total_needed / (years_to_retirement * 12)
+
     return f"""Retirement Calculation:
 - Years until retirement: {years_to_retirement}
 - Years in retirement: {years_in_retirement}
 - Future annual expenses (adjusted for inflation): ${future_annual_expenses:,.2f}
 - Total retirement fund needed: ${total_needed:,.2f}
-- Recommended monthly savings: ${(total_needed / (years_to_retirement * 12)):,.2f}"""
+- Recommended monthly savings: ${monthly_savings:,.2f}"""
 
 @tool
 def calculate_life_insurance(annual_income: float, num_dependents: int,
@@ -67,10 +173,14 @@ def calculate_education_fund(num_children: int, children_ages: List[int],
 
         details.append(f"Child {i+1} (age {age}): ${child_total:,.2f} needed in {years_until_college} years")
 
+    # Guard against division by zero
+    months_until_college = max([18 - age for age in children_ages if age < 18] + [1]) * 12
+    monthly_savings = 0 if months_until_college <= 0 else total_needed / months_until_college
+
     return f"""Education Fund Calculation:
 {chr(10).join(details)}
 - Total education fund needed: ${total_needed:,.2f}
-- Recommended monthly savings: ${(total_needed / (max([18 - age for age in children_ages if age < 18] + [1]) * 12)):,.2f}"""
+- Recommended monthly savings: ${monthly_savings:,.2f}"""
 
 @tool
 def calculate_estate_tax(total_assets: float, state: str = "Federal") -> str:
@@ -254,6 +364,7 @@ class AgentState(TypedDict):
     user_info: Dict[str, Any]
     selected_plans: List[str]
     plan_summaries: Dict[str, str]
+    mcp_data: Dict[str, Any]  # Track MCP tool calls and results for display
     next_agent: str
 
 
@@ -270,7 +381,8 @@ class RetirementAgent:
     """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
-        self.tools = [calculate_retirement_needs, calculate_wealth_allocation]
+        self.tools = [calculate_retirement_needs, calculate_wealth_allocation, 
+                     project_retirement_inflation, get_inflation_rate]
 
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
@@ -286,9 +398,21 @@ User Information:
 - Current Savings: ${user_info.get('savings', 0):,.2f}
 - Risk Tolerance: {user_info.get('risk_tolerance', 'moderate')}
 
-Use the available tools to calculate retirement needs and recommend asset allocation.
-Provide a detailed retirement plan summary including Social Security optimization strategies, 
-required minimum distribution planning, and sustainable withdrawal rate recommendations."""
+IMPORTANT: You MUST use ALL available tools to provide comprehensive retirement planning with real market data:
+
+1. Call get_inflation_rate - Get CURRENT inflation rate for accurate projections
+2. Analyze current market conditions for portfolio context
+3. Call project_retirement_inflation with current expense estimates and inflation data
+4. Call calculate_retirement_needs with current age, retirement age, and estimated annual expenses
+5. Call calculate_wealth_allocation with total assets, current age, and risk tolerance
+
+After using ALL these tools, provide a detailed retirement plan summary including:
+- Current market conditions and inflation context
+- Retirement fund needed calculations based on inflation
+- Social Security optimization strategies  
+- Required minimum distribution planning
+- Sustainable withdrawal rate recommendations
+- Asset allocation aligned with current market conditions"""
 
         tools_to_use = self.tools
         llm_with_tools = self.llm.bind_tools(tools_to_use)
@@ -297,17 +421,30 @@ required minimum distribution planning, and sustainable withdrawal rate recommen
 
         # Execute tool calls if any
         tool_results = []
+        mcp_tools_used = []  # Track tools for display
+        
         if hasattr(response, 'tool_calls') and response.tool_calls:
+            logger.info("="*80)
+            logger.info(f"✓ LLM-DRIVEN MODE: LLM invoked {len(response.tool_calls)} tools for Retirement Planning")
+            logger.info("Using MCP data directly in LLM reasoning")
+            logger.info("="*80)
+            
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
+                logger.info(f"  → Executing: {tool_name}({list(tool_args.keys())})")
 
                 # Find and execute the tool
                 for tool in tools_to_use:
                     if tool.name == tool_name:
                         result = tool.invoke(tool_args)
                         tool_results.append(result)
+                        mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
+                        logger.info(f"  ✓ {tool_name} completed")
+                        logger.debug(f"     Result preview: {str(result)[:200]}...")
 
+            logger.info(f"💡 LLM now synthesizing {len(tool_results)} tool results into financial plan")
+            
             # Create final summary with tool results
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -317,7 +454,76 @@ Create a comprehensive retirement planning summary with specific recommendations
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            summary = response.content
+            logger.warning("="*80)
+            logger.warning("⚠ FALLBACK MODE: LLM did not invoke tools for Retirement Planning")
+            logger.warning("Creating summary from user data + MCP inflation data")
+            logger.warning("="*80)
+            
+            # Economic Data MCP - Get real inflation data
+            inflation_result = get_inflation_rate.invoke({})
+            mcp_tools_used.append({"name": "get_inflation_rate", "source": "Economic Data MCP", "args": {}, "result": inflation_result})
+            logger.info(f"✓ MCP Data Retrieved: get_inflation_rate")
+            logger.debug(f"   Raw inflation result: {inflation_result}")
+            
+            # Parse inflation rate from MCP result
+            try:
+                import json
+                inflation_data = json.loads(inflation_result) if isinstance(inflation_result, str) else inflation_result
+                inflation_rate = inflation_data.get('rate', 3.0) / 100  # Convert to decimal
+                logger.info(f"✓ Using REAL inflation rate from MCP: {inflation_rate*100:.2f}%")
+            except Exception as e:
+                inflation_rate = 0.03  # 3% fallback
+                logger.warning(f"⚠ Could not parse inflation data, using fallback 3%: {e}")
+            
+            # Create retirement summary from user information
+            age = user_info.get('age', 30)
+            retirement_age = user_info.get('retirement_age', 65)
+            annual_income = user_info.get('annual_income', 0)
+            savings = user_info.get('savings', 0)
+            years_to_retirement = max(retirement_age - age, 0)
+            
+            # Calculate inflation-adjusted retirement needs
+            replacement_ratio = 0.8  # 80% income replacement
+            withdrawal_rate = 0.04   # 4% safe withdrawal rate
+            future_income = annual_income * ((1 + inflation_rate) ** years_to_retirement)
+            retirement_goal = (future_income * replacement_ratio) / withdrawal_rate
+            
+            logger.info(f"💰 CALCULATION WITH MCP DATA:")
+            logger.info(f"   - Current income: ${annual_income:,.2f}")
+            logger.info(f"   - Inflation rate (from MCP): {inflation_rate*100:.2f}%")
+            logger.info(f"   - Years to retirement: {years_to_retirement}")
+            logger.info(f"   - Future income (inflation-adjusted): ${future_income:,.2f}")
+            logger.info(f"   - Retirement goal needed: ${retirement_goal:,.2f}")
+            logger.info(f"   - Current progress: {(savings / retirement_goal * 100) if retirement_goal > 0 else 0:.1f}%")
+            
+            summary = f"""## Retirement Planning Summary
+
+**Current Situation:**
+- Current Age: {age}
+- Target Retirement Age: {retirement_age}
+- Years to Retirement: {years_to_retirement}
+- Current Annual Income: ${annual_income:,.2f}
+- Current Retirement Savings: ${savings:,.2f}
+
+**Retirement Savings Goal (Inflation-Adjusted):**
+Based on current inflation rate of {inflation_rate*100:.2f}% (from market data), you'll need approximately ${retirement_goal:,.2f} at retirement to maintain your lifestyle (80% income replacement with 4% withdrawal rate).
+
+**Current Progress:**
+Your current savings of ${savings:,.2f} represents {(savings / retirement_goal * 100) if retirement_goal > 0 else 0:.1f}% of your inflation-adjusted retirement goal.
+
+**Recommended Actions:**
+1. Maximize employer 401(k) match if available
+2. Consider contributing to a Roth IRA for tax-free growth
+3. Aim to save 15-20% of annual income for retirement
+4. Review and adjust asset allocation based on time horizon
+5. Consider consulting with a financial advisor for personalized guidance
+
+*Note: These are general guidelines. Actual retirement needs may vary based on lifestyle, healthcare costs, and other factors.*"""
+
+        # Track MCP tools used for this plan
+        if "Retirement Planning" not in state["mcp_data"]:
+            state["mcp_data"]["Retirement Planning"] = {"tools": []}
+        state["mcp_data"]["Retirement Planning"]["tools"] = mcp_tools_used
 
         state["plan_summaries"]["Retirement Planning"] = summary
         state["messages"].append(AIMessage(content="✓ Retirement Planning Complete"))
@@ -343,17 +549,33 @@ User Information:
 - Current Savings: ${user_info.get('savings', 0):,.2f}
 - Outstanding Debts: ${user_info.get('debts', 0):,.2f}
 
-Use the life insurance calculation tool and provide comprehensive insurance recommendations
-including life, health, disability, and liability insurance."""
+IMPORTANT: You MUST use the life insurance calculation tool to determine appropriate coverage amounts.
+
+Call calculate_life_insurance with the client's income, dependents, and debts to calculate:
+- Required life insurance coverage amount
+- Recommended term length based on dependents
+
+After using this tool, provide comprehensive insurance recommendations covering:
+- Life insurance type and amount (term vs permanent)
+- Health insurance coverage assessment
+- Disability insurance needs
+- Liability insurance requirements
+- Overall insurance strategy aligned with financial plan"""
 
         llm_with_tools = self.llm.bind_tools(self.tools)
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
+        mcp_tools_used = []  # Track tools for display
+        
         if hasattr(response, 'tool_calls') and response.tool_calls:
+            print(f"\n✓ LLM invoked {len(response.tool_calls)} tools for Insurance Planning")
             for tool_call in response.tool_calls:
-                result = calculate_life_insurance.invoke(tool_call["args"])
+                tool_args = tool_call["args"]
+                result = calculate_life_insurance.invoke(tool_args)
                 tool_results.append(result)
+                mcp_tools_used.append({"name": "calculate_life_insurance", "args": tool_args, "result": result})
+                print(f"  ✓ calculate_life_insurance completed")
 
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -363,7 +585,36 @@ Create a comprehensive insurance planning summary covering life, health, disabil
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            summary = response.content
+            print(f"\n⚠ LLM did not invoke tools for Insurance Planning, calling directly")
+            # Call tool directly
+            annual_income = user_info.get('annual_income', 0)
+            num_dependents = user_info.get('num_dependents', 0)
+            outstanding_debts = user_info.get('debts', 0)
+            savings = user_info.get('savings', 0)
+            
+            insurance_args = {
+                "annual_income": annual_income,
+                "num_dependents": num_dependents,
+                "outstanding_debts": outstanding_debts,
+                "savings": savings
+            }
+            insurance_result = calculate_life_insurance.invoke(insurance_args)
+            tool_results.append(insurance_result)
+            mcp_tools_used.append({"name": "calculate_life_insurance", "args": insurance_args, "result": insurance_result})
+            print(f"  ✓ calculate_life_insurance completed")
+            
+            summary_prompt = f"""Based on these calculations:
+{chr(10).join(tool_results)}
+
+Create a comprehensive insurance planning summary covering life, health, disability, and liability insurance."""
+
+            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+            summary = final_response.content
+
+        # Track MCP tools used for this plan
+        if "Insurance Planning" not in state["mcp_data"]:
+            state["mcp_data"]["Insurance Planning"] = {"tools": []}
+        state["mcp_data"]["Insurance Planning"]["tools"] = mcp_tools_used
 
         state["plan_summaries"]["Insurance Planning"] = summary
         state["messages"].append(AIMessage(content="✓ Insurance Planning Complete"))
@@ -395,32 +646,68 @@ User Information:
 - Number of Children: {user_info.get('num_children', 0)}
 - Children Ages: {user_info.get('children_ages', [])}
 
-Use the available tools to calculate estate taxes and education funding needs.
-Provide comprehensive recommendations for wills, trusts, beneficiary designations, 
-legacy planning strategies, and seamless wealth transfer mechanisms."""
+IMPORTANT: You MUST use the available tools to provide accurate calculations:
+
+1. Call calculate_estate_tax with the client's total assets to determine potential estate tax liability
+2. If there are children, call calculate_education_fund to plan for education expenses
+
+After calling these tools, provide comprehensive recommendations for:
+- Wills and trust structures
+- Beneficiary designations
+- Legacy planning strategies
+- Estate tax minimization
+- Seamless wealth transfer mechanisms"""
 
         llm_with_tools = self.llm.bind_tools(self.tools)
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
+        mcp_tools_used = []  # Track tools for display
+        
         if hasattr(response, 'tool_calls') and response.tool_calls:
+            print(f"\n✓ LLM invoked {len(response.tool_calls)} tools for Estate Planning")
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
                 for tool in self.tools:
                     if tool.name == tool_name:
-                        result = tool.invoke(tool_call["args"])
+                        result = tool.invoke(tool_args)
                         tool_results.append(result)
+                        mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
+                        print(f"  ✓ {tool_name} completed")
+        else:
+            print(f"\n⚠ LLM did not invoke tools for Estate Planning, calling directly")
+            # Call tools directly
+            total_assets = user_info.get('total_assets', user_info.get('savings', 0))
+            if total_assets > 0:
+                estate_tax_args = {"total_assets": total_assets}
+                estate_tax_result = calculate_estate_tax.invoke(estate_tax_args)
+                tool_results.append(estate_tax_result)
+                mcp_tools_used.append({"name": "calculate_estate_tax", "args": estate_tax_args, "result": estate_tax_result})
+                print(f"  ✓ calculate_estate_tax completed")
+            
+            num_children = user_info.get('num_children', 0)
+            children_ages = user_info.get('children_ages', [])
+            if num_children > 0 and children_ages:
+                education_args = {"num_children": num_children, "children_ages": children_ages}
+                education_result = calculate_education_fund.invoke(education_args)
+                tool_results.append(education_result)
+                mcp_tools_used.append({"name": "calculate_education_fund", "args": education_args, "result": education_result})
+                print(f"  ✓ calculate_education_fund completed")
 
-            summary_prompt = f"""Based on these calculations:
+        summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
 
 Create a comprehensive estate planning summary including wills, trusts, beneficiary designations,
 education funding, and tax minimization strategies."""
 
-            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
-            summary = final_response.content
-        else:
-            summary = response.content
+        final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+        summary = final_response.content
+
+        # Track MCP tools used for this plan
+        if "Estate Planning" not in state["mcp_data"]:
+            state["mcp_data"]["Estate Planning"] = {"tools": []}
+        state["mcp_data"]["Estate Planning"]["tools"] = mcp_tools_used
 
         state["plan_summaries"]["Estate Planning"] = summary
         state["messages"].append(AIMessage(content="✓ Estate Planning Complete"))
@@ -437,7 +724,7 @@ class WealthAgent:
     """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
-        self.tools = [calculate_wealth_allocation]
+        self.tools = [calculate_wealth_allocation, get_portfolio_performance, get_stock_price]
 
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
@@ -452,9 +739,16 @@ User Information:
 - Total Assets: ${user_info.get('total_assets', user_info.get('savings', 0)):,.2f}
 - Risk Tolerance: {user_info.get('risk_tolerance', 'moderate')}
 
-Use the asset allocation tool and provide recommendations for:
-- Investment strategy that adapts to market conditions
-- Real-time portfolio adjustments based on risk tolerance
+IMPORTANT: You MUST use the available tools to provide accurate wealth management advice:
+
+1. Call calculate_wealth_allocation with total assets, age, and risk tolerance
+2. Assess current market conditions for portfolio context
+3. Call get_portfolio_performance to evaluate current portfolio health
+4. Call get_stock_price for specific investment examples if applicable
+
+After using these tools, provide comprehensive recommendations for:
+- Personalized investment strategy aligned with risk tolerance
+- Real-time portfolio adjustments based on market conditions
 - Financial goal tracking and progress monitoring
 - Tax optimization strategies
 - Cash flow management and diversification
@@ -464,10 +758,25 @@ Use the asset allocation tool and provide recommendations for:
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
+        mcp_tools_used = []  # Track tools for display
+        
         if hasattr(response, 'tool_calls') and response.tool_calls:
+            logger.info("="*80)
+            logger.info(f"✓ LLM-DRIVEN MODE: LLM invoked {len(response.tool_calls)} tools for Personal Wealth Management")
+            logger.info("Using MCP data directly in LLM reasoning")
+            logger.info("="*80)
+            
             for tool_call in response.tool_calls:
-                result = calculate_wealth_allocation.invoke(tool_call["args"])
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                logger.info(f"  → Executing: {tool_name}({list(tool_args.keys())})")
+                result = calculate_wealth_allocation.invoke(tool_args)
                 tool_results.append(result)
+                mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
+                logger.info(f"  ✓ {tool_name} completed")
+                logger.debug(f"     Result preview: {str(result)[:200]}...")
+
+            logger.info(f"💡 LLM now synthesizing {len(tool_results)} tool results into wealth management plan")
 
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -478,7 +787,66 @@ diversification recommendations, and monitoring schedule."""
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            summary = response.content
+            logger.warning("="*80)
+            logger.warning("⚠ FALLBACK MODE: LLM did not invoke tools for Personal Wealth Management")
+            logger.warning("Creating summary from user data (no MCP data required for basic allocation)")
+            logger.warning("="*80)
+            
+            # Create investment summary from user information
+            age = user_info.get('age', 30)
+            annual_income = user_info.get('annual_income', 0)
+            savings = user_info.get('savings', 0)
+            risk_tolerance = user_info.get('risk_tolerance', 'moderate')
+            
+            logger.info(f"📊 FALLBACK CALCULATION (no MCP data used):")
+            logger.info(f"   - Age: {age}")
+            logger.info(f"   - Risk tolerance: {risk_tolerance}")
+            logger.info(f"   - Savings: ${savings:,.2f}")
+            
+            # Determine asset allocation based on risk tolerance
+            if risk_tolerance == 'conservative':
+                stocks, bonds, cash = 40, 50, 10
+            elif risk_tolerance == 'aggressive':
+                stocks, bonds, cash = 80, 15, 5
+            else:  # moderate
+                stocks, bonds, cash = 60, 30, 10
+            
+            summary = f"""## Personal Wealth Management Summary
+
+**Current Investment Profile:**
+- Age: {age}
+- Risk Tolerance: {risk_tolerance.title()}
+- Current Savings: ${savings:,.2f}
+- Annual Income: ${annual_income:,.2f}
+
+**Recommended Asset Allocation:**
+- Stocks/Equities: {stocks}%
+- Bonds/Fixed Income: {bonds}%
+- Cash/Emergency Fund: {cash}%
+
+**Investment Strategy:**
+Based on your {risk_tolerance} risk profile, we recommend a balanced approach that prioritizes {"growth" if risk_tolerance == "aggressive" else "stability" if risk_tolerance == "conservative" else "balanced growth and income"}.
+
+**Key Recommendations:**
+1. Maintain 3-6 months of expenses in emergency fund
+2. Diversify across different asset classes and sectors
+3. Consider low-cost index funds for broad market exposure
+4. Review and rebalance portfolio quarterly
+5. Maximize tax-advantaged accounts (401k, IRA, HSA)
+6. Consider dollar-cost averaging for regular contributions
+
+**Next Steps:**
+- Schedule quarterly portfolio reviews
+- Set up automatic contributions to investment accounts
+- Monitor performance against benchmarks
+- Adjust allocation as you approach major life milestones
+
+*Disclaimer: This is general investment guidance. Consider consulting with a licensed financial advisor for personalized recommendations.*"""
+
+        # Track MCP tools used for this plan
+        if "Personal Wealth Management" not in state["mcp_data"]:
+            state["mcp_data"]["Personal Wealth Management"] = {"tools": []}
+        state["mcp_data"]["Personal Wealth Management"]["tools"] = mcp_tools_used
 
         state["plan_summaries"]["Personal Wealth Management"] = summary
         state["messages"].append(AIMessage(content="✓ Wealth Management Planning Complete"))
@@ -495,7 +863,7 @@ class EducationAgent:
     """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
-        self.tools = [calculate_education_fund, calculate_529_plan, analyze_scholarship_opportunities]
+        self.tools = [calculate_education_fund, calculate_529_plan, analyze_scholarship_opportunities, project_retirement_inflation]
 
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
@@ -512,21 +880,37 @@ User Information:
 - Current Education Savings: ${user_info.get('education_savings', 0):,.2f}
 - Annual Education Contribution: ${user_info.get('annual_education_contribution', 0):,.2f}
 
-Use the available tools to analyze education funding needs, 529 plan projections, and scholarship opportunities.
-Provide comprehensive education planning recommendations including funding strategies, 
-scholarship research guidance, and loan optimization approaches."""
+IMPORTANT: You MUST use the available tools to provide accurate education planning:
+
+1. Call calculate_education_fund with number of children and their ages to determine funding needs
+2. Call calculate_529_plan to show tax-advantaged saving strategies
+3. Call analyze_scholarship_opportunities to identify funding sources
+4. Call project_retirement_inflation to understand cost escalation over time
+
+After using these tools, provide comprehensive education planning recommendations including:
+- Total education funding needs by child
+- 529 plan strategy and contribution recommendations
+- Scholarship opportunities and research guidance
+- Loan optimization approaches
+- Timeline-based funding strategy"""
 
         llm_with_tools = self.llm.bind_tools(self.tools)
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
+        mcp_tools_used = []  # Track tools for display
+        
         if hasattr(response, 'tool_calls') and response.tool_calls:
+            print(f"\n✓ LLM invoked {len(response.tool_calls)} tools for Education Planning")
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
                 for tool in self.tools:
                     if tool.name == tool_name:
-                        result = tool.invoke(tool_call["args"])
+                        result = tool.invoke(tool_args)
                         tool_results.append(result)
+                        mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
+                        print(f"  ✓ {tool_name} completed")
 
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -537,7 +921,34 @@ scholarship opportunities, loan optimization, and timeline-based funding approac
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            summary = response.content
+            print(f"\n⚠ LLM did not invoke tools for Education Planning, calling directly")
+            # Call key tool directly
+            num_children = user_info.get('num_children', 0)
+            children_ages = user_info.get('children_ages', [])
+            
+            if num_children > 0 and children_ages:
+                education_args = {
+                    "num_children": num_children,
+                    "children_ages": children_ages
+                }
+                education_result = calculate_education_fund.invoke(education_args)
+                tool_results.append(education_result)
+                mcp_tools_used.append({"name": "calculate_education_fund", "args": education_args, "result": education_result})
+                print(f"  ✓ calculate_education_fund completed")
+            
+            summary_prompt = f"""Based on these calculations:
+{chr(10).join(tool_results)}
+
+Create a comprehensive education planning summary including 529 plan strategies, 
+scholarship opportunities, loan optimization, and timeline-based funding approaches."""
+
+            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+            summary = final_response.content
+
+        # Track MCP tools used for this plan
+        if "Education Planning" not in state["mcp_data"]:
+            state["mcp_data"]["Education Planning"] = {"tools": []}
+        state["mcp_data"]["Education Planning"]["tools"] = mcp_tools_used
 
         state["plan_summaries"]["Education Planning"] = summary
         state["messages"].append(AIMessage(content="✓ Education Planning Complete"))
@@ -555,7 +966,7 @@ class TaxAgent:
     """
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
-        self.tools = [calculate_tax_optimization]
+        self.tools = [calculate_tax_optimization, get_inflation_rate, get_federal_funds_rate]
 
     def process(self, state: AgentState) -> AgentState:
         user_info = state["user_info"]
@@ -570,19 +981,36 @@ User Information:
 - Filing Status: {user_info.get('filing_status', 'married')}
 - Current Retirement Contributions: ${user_info.get('retirement_contributions', 0):,.2f}
 - Charitable Giving: ${user_info.get('charitable_giving', 0):,.2f}
+- Other Deductions: ${user_info.get('other_deductions', 0):,.2f}
 
-Use the tax optimization tool to analyze current tax situation and identify opportunities.
-Provide comprehensive tax planning strategies including deduction optimization, 
-retirement contribution strategies, tax-loss harvesting, and year-round tax planning approaches."""
+IMPORTANT: You MUST use the available tools to provide accurate tax planning:
+
+1. Call calculate_tax_optimization with income and deductions to identify tax savings opportunities
+2. Call get_inflation_rate to understand impact on tax brackets and deductions
+3. Call get_federal_funds_rate to assess interest rate implications for tax strategy
+
+After using these tools, provide comprehensive tax planning strategies including:
+- Deduction optimization and maximization
+- Retirement contribution strategies (401k, IRA, backdoor conversions)
+- Tax-loss harvesting opportunities
+- Estimated quarterly tax planning
+- Year-round tax-efficient decision making"""
 
         llm_with_tools = self.llm.bind_tools(self.tools)
         response = llm_with_tools.invoke([HumanMessage(content=prompt)])
 
         tool_results = []
+        mcp_tools_used = []  # Track tools for display
+        
         if hasattr(response, 'tool_calls') and response.tool_calls:
+            print(f"\n✓ LLM invoked {len(response.tool_calls)} tools for Tax Planning")
             for tool_call in response.tool_calls:
-                result = calculate_tax_optimization.invoke(tool_call["args"])
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                result = calculate_tax_optimization.invoke(tool_args)
                 tool_results.append(result)
+                mcp_tools_used.append({"name": tool_name, "args": tool_args, "result": result})
+                print(f"  ✓ {tool_name} completed")
 
             summary_prompt = f"""Based on these calculations:
 {chr(10).join(tool_results)}
@@ -593,7 +1021,35 @@ deduction identification, compliance assistance, and year-round tax-efficient de
             final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
             summary = final_response.content
         else:
-            summary = response.content
+            print(f"\n⚠ LLM did not invoke tools for Tax Planning, calling directly")
+            # Call key tool directly
+            annual_income = user_info.get('annual_income', 0)
+            retirement_contributions = user_info.get('retirement_contributions', 0)
+            charitable_giving = user_info.get('charitable_giving', 0)
+            
+            tax_args = {
+                "annual_income": annual_income,
+                "retirement_contributions": retirement_contributions,
+                "charitable_giving": charitable_giving
+            }
+            tax_result = calculate_tax_optimization.invoke(tax_args)
+            tool_results.append(tax_result)
+            mcp_tools_used.append({"name": "calculate_tax_optimization", "args": tax_args, "result": tax_result})
+            print(f"  ✓ calculate_tax_optimization completed")
+            
+            summary_prompt = f"""Based on these calculations:
+{chr(10).join(tool_results)}
+
+Create a comprehensive tax planning summary including optimization strategies, 
+deduction identification, compliance assistance, and year-round tax-efficient decision making."""
+
+            final_response = self.llm.invoke([HumanMessage(content=summary_prompt)])
+            summary = final_response.content
+
+        # Track MCP tools used for this plan
+        if "Tax Planning" not in state["mcp_data"]:
+            state["mcp_data"]["Tax Planning"] = {"tools": []}
+        state["mcp_data"]["Tax Planning"]["tools"] = mcp_tools_used
 
         state["plan_summaries"]["Tax Planning"] = summary
         state["messages"].append(AIMessage(content="✓ Tax Planning Complete"))
