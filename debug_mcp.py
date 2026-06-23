@@ -235,7 +235,6 @@ def check_mcp_client():
         traceback.print_exc()
         print()
 
-
 def check_rate_limiting():
     """Explain Alpha Vantage rate limiting"""
     print("\n" + "="*80)
@@ -257,6 +256,7 @@ def check_rate_limiting():
     print("  ✓ Upgrade to premium plan for higher limits")
     print("  ✓ Stagger requests across multiple symbols")
     print()
+
 
 
 def main():
